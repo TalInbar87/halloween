@@ -1,8 +1,15 @@
 import { useState, type ComponentType, type FormEvent } from 'react';
-import { validateHouseInput, ADDRESS_MAX, NOTES_MAX, UNIT_MAX, type HouseFormErrors } from '../lib/validation';
+import {
+  validateHouseInput,
+  ADDRESS_MAX,
+  BUILDING_CODE_MAX,
+  NOTES_MAX,
+  UNIT_MAX,
+  type HouseFormErrors,
+} from '../lib/validation';
 import { friendlyError } from '../lib/houses';
 import type { GeocodeResult } from '../lib/geocode';
-import type { LatLng, NewHouse } from '../lib/types';
+import type { House, LatLng, NewHouse } from '../lib/types';
 import { MapPicker } from './MapPicker';
 
 export interface PickerProps {
@@ -11,21 +18,35 @@ export interface PickerProps {
 }
 
 interface Props {
-  submit: (house: NewHouse) => Promise<string>;
+  submit: (house: NewHouse) => Promise<unknown>;
   geocode: (query: string) => Promise<GeocodeResult[]>;
   reverseGeocode: (point: LatLng) => Promise<string | null>;
   locate: () => Promise<LatLng>;
   onAdded: () => void;
+  /** Edit an existing house instead of adding a new one. */
+  initial?: House;
+  onCancel?: () => void;
   Picker?: ComponentType<PickerProps>;
 }
 
-export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded, Picker = MapPicker }: Props) {
-  const [address, setAddress] = useState('');
-  const [apartment, setApartment] = useState('');
-  const [floor, setFloor] = useState('');
-  const [notes, setNotes] = useState('');
-  const [pin, setPin] = useState<LatLng | null>(null);
-  const [consent, setConsent] = useState(false);
+export function AddHouseForm({
+  submit,
+  geocode,
+  reverseGeocode,
+  locate,
+  onAdded,
+  initial,
+  onCancel,
+  Picker = MapPicker,
+}: Props) {
+  const editing = Boolean(initial);
+  const [address, setAddress] = useState(initial?.address ?? '');
+  const [apartment, setApartment] = useState(initial?.apartment ?? '');
+  const [floor, setFloor] = useState(initial?.floor ?? '');
+  const [buildingCode, setBuildingCode] = useState(initial?.building_code ?? '');
+  const [notes, setNotes] = useState(initial?.notes ?? '');
+  const [pin, setPin] = useState<LatLng | null>(initial ? { lat: initial.lat, lng: initial.lng } : null);
+  const [consent, setConsent] = useState(editing);
   const [errors, setErrors] = useState<HouseFormErrors>({});
   const [searchMsg, setSearchMsg] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
@@ -90,6 +111,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       address,
       apartment,
       floor,
+      buildingCode,
       notes,
       lat: pin?.lat ?? null,
       lng: pin?.lng ?? null,
@@ -104,7 +126,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
     try {
       await submit(result.value);
       onAdded();
-      setSuccess(true);
+      if (!editing) setSuccess(true);
     } catch (err) {
       setServerError(friendlyError(err));
     } finally {
@@ -117,7 +139,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       <div className="card success">
         <h2>הבית נוסף למפה!</h2>
         <p>הילדים כבר יכולים לראות אותו.</p>
-        <p>נגמרו הממתקים? ב"הסרת בתים" מחפשים את הכתובת ומסירים אותה.</p>
+        <p>נגמרו הממתקים? ב"הסרה ועריכה" מחפשים את הכתובת ומסירים אותה.</p>
         <button
           type="button"
           className="btn secondary"
@@ -126,6 +148,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
             setAddress('');
             setApartment('');
             setFloor('');
+            setBuildingCode('');
             setNotes('');
             setPin(null);
             setConsent(false);
@@ -140,7 +163,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
 
   return (
     <form className="card form" onSubmit={handleSubmit} noValidate>
-      <h2>מחלקים ממתקים? הוסיפו את הבית</h2>
+      <h2>{editing ? 'עריכת בית' : 'מחלקים ממתקים? הוסיפו את הבית'}</h2>
 
       <label htmlFor="address">כתובת</label>
       <input
@@ -187,8 +210,22 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
             onChange={(e) => setFloor(e.target.value)}
           />
         </div>
+        <div>
+          <label htmlFor="building-code">קוד לבניין</label>
+          <input
+            id="building-code"
+            value={buildingCode}
+            maxLength={BUILDING_CODE_MAX}
+            inputMode="text"
+            autoComplete="off"
+            placeholder="לא חובה"
+            onChange={(e) => setBuildingCode(e.target.value)}
+          />
+        </div>
       </div>
-      {(errors.apartment || errors.floor) && <p className="error">{errors.apartment ?? errors.floor}</p>}
+      {(errors.apartment || errors.floor || errors.buildingCode) && (
+        <p className="error">{errors.apartment ?? errors.floor ?? errors.buildingCode}</p>
+      )}
 
       <label htmlFor="notes">הערות לכתובת (לא חובה)</label>
       <input
@@ -216,9 +253,16 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
         </p>
       )}
 
-      <button type="submit" className="btn primary" disabled={sending}>
-        הוסיפו לי את הבית
-      </button>
+      <div className="form-actions">
+        <button type="submit" className="btn primary" disabled={sending}>
+          {editing ? 'שמירת שינויים' : 'הוסיפו לי את הבית'}
+        </button>
+        {editing && onCancel && (
+          <button type="button" className="btn secondary" onClick={onCancel}>
+            ביטול
+          </button>
+        )}
+      </div>
     </form>
   );
 }

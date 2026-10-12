@@ -7,6 +7,7 @@ interface Props {
   houses: House[];
   /** Admin panel is already unlocked; rejects with `rate_limited`, … */
   onRemove: (id: string) => Promise<void>;
+  onEdit: (house: House) => void;
 }
 
 function RemoveButton({ house, onRemove }: { house: House; onRemove: Props['onRemove'] }) {
@@ -51,7 +52,7 @@ function RemoveButton({ house, onRemove }: { house: House; onRemove: Props['onRe
   );
 }
 
-export function HouseList({ houses, onRemove }: Props) {
+export function HouseList({ houses, onRemove, onEdit }: Props) {
   const [query, setQuery] = useState('');
   const [removedMsg, setRemovedMsg] = useState<string | null>(null);
   const listId = useId();
@@ -66,8 +67,8 @@ export function HouseList({ houses, onRemove }: Props) {
 
   return (
     <div className="card">
-      <h3>הסרת בית</h3>
-      <p className="hint">נגמרו הממתקים או שלא רוצים ביקורים? חפשו את הכתובת והסירו אותה מהמפה.</p>
+      <h3>הסרה ועריכה</h3>
+      <p className="hint">חפשו את הכתובת כדי לדייק אותה, או להסיר אותה כשנגמרו הממתקים.</p>
 
       <label htmlFor="house-search" className="visually-hidden">
         חפשו כתובת
@@ -96,7 +97,12 @@ export function HouseList({ houses, onRemove }: Props) {
         {results.map((h) => (
           <li key={h.id} role="option" aria-selected={false}>
             <span className="result-address">{formatAddress(h)}</span>
-            <RemoveButton house={h} onRemove={remove} />
+            <div className="result-actions">
+              <button type="button" className="btn secondary" onClick={() => onEdit(h)}>
+                עריכה
+              </button>
+              <RemoveButton house={h} onRemove={remove} />
+            </div>
           </li>
         ))}
       </ul>

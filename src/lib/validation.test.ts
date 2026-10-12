@@ -5,6 +5,7 @@ const valid = {
   address: 'הרצל 10, ראשון לציון',
   apartment: '',
   floor: '',
+  buildingCode: '',
   notes: '',
   lat: 31.96,
   lng: 34.8,
@@ -34,6 +35,19 @@ describe('validateHouseInput', () => {
       expect(r.errors.apartment).toBeDefined();
       expect(r.errors.floor).toBeDefined();
     }
+  });
+
+  it('turns an empty building code into null', () => {
+    const r = validateHouseInput(valid);
+    expect(r.ok && r.value.building_code).toBe(null);
+  });
+
+  it('keeps a trimmed building code and caps its length', () => {
+    const ok = validateHouseInput({ ...valid, buildingCode: ' 1234# ' });
+    expect(ok.ok && ok.value.building_code).toBe('1234#');
+    const long = validateHouseInput({ ...valid, buildingCode: 'x'.repeat(21) });
+    expect(long.ok).toBe(false);
+    if (!long.ok) expect(long.errors.buildingCode).toBeDefined();
   });
 
   it('turns empty notes into null', () => {

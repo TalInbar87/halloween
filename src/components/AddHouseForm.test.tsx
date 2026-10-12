@@ -47,6 +47,65 @@ describe('AddHouseForm', () => {
     expect(notes.compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('puts an optional building code next to apartment and floor', () => {
+    setup();
+    const code = screen.getByLabelText('קוד לבניין');
+    expect(code.closest('.unit-row')).toBe(screen.getByLabelText('קומה').closest('.unit-row'));
+    expect(code).toHaveAttribute('placeholder', 'לא חובה');
+  });
+
+  describe('edit mode', () => {
+    const initial = {
+      id: 'h9',
+      address: 'נהר הירדן 23, קרית אונו',
+      apartment: '20',
+      floor: '5',
+      building_code: null,
+      notes: 'בלי בוטנים',
+      lat: 32.0507,
+      lng: 34.858,
+      created_at: 'x',
+    };
+
+    it('starts filled with the existing house, pin included and consent given', () => {
+      setup({ initial });
+      expect(screen.getByRole('heading', { name: 'עריכת בית' })).toBeInTheDocument();
+      expect(screen.getByLabelText('כתובת')).toHaveValue('נהר הירדן 23, קרית אונו');
+      expect(screen.getByLabelText('דירה')).toHaveValue('20');
+      expect(screen.getByLabelText('קומה')).toHaveValue('5');
+      expect(screen.getByLabelText(/הערות/)).toHaveValue('בלי בוטנים');
+      expect(screen.getByTestId('pin')).toHaveTextContent('32.0507,34.858');
+      expect(screen.getByLabelText(/מסכימים/)).toBeChecked();
+    });
+
+    it('saves the edited values', async () => {
+      const { submit, onAdded, user } = setup({ initial });
+      await user.clear(screen.getByLabelText('כתובת'));
+      await user.type(screen.getByLabelText('כתובת'), 'נהר הירדן 25, קרית אונו');
+      await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
+      await user.click(screen.getByRole('button', { name: 'שמירת שינויים' }));
+      await waitFor(() =>
+        expect(submit).toHaveBeenCalledWith({
+          address: 'נהר הירדן 25, קרית אונו',
+          apartment: '20',
+          floor: '5',
+          building_code: null,
+          notes: 'בלי בוטנים',
+          lat: 32.05,
+          lng: 34.858,
+        }),
+      );
+      expect(onAdded).toHaveBeenCalled();
+    });
+
+    it('can be cancelled', async () => {
+      const onCancel = vi.fn();
+      const { user } = setup({ initial, onCancel });
+      await user.click(screen.getByRole('button', { name: 'ביטול' }));
+      expect(onCancel).toHaveBeenCalled();
+    });
+  });
+
   it('places the consent checkbox above the map', () => {
     setup();
     const consent = screen.getByLabelText(/מסכימים/);
@@ -128,6 +187,7 @@ describe('AddHouseForm', () => {
     await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
     await user.type(screen.getByLabelText('דירה'), '4');
     await user.type(screen.getByLabelText('קומה'), '2');
+    await user.type(screen.getByLabelText('קוד לבניין'), '1234#');
     await user.type(screen.getByLabelText(/הערות/), 'ממתקים בלי בוטנים');
     await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
     await user.click(screen.getByLabelText(/מסכימים/));
@@ -137,6 +197,7 @@ describe('AddHouseForm', () => {
         address: 'הירדן 12',
         apartment: '4',
         floor: '2',
+        building_code: '1234#',
         notes: 'ממתקים בלי בוטנים',
         lat: 32.05,
         lng: 34.858,

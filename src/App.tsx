@@ -5,10 +5,19 @@ import { HouseList } from './components/HouseList';
 import { PasswordPrompt } from './components/PasswordPrompt';
 import { AdminPanel } from './components/AdminPanel';
 import { supabase, supabaseConfigured } from './lib/supabase';
-import { addHouse, fetchHouses, removeHouse, verifyPassword } from './lib/houses';
+import { addHouse, fetchHouses, removeHouse, updateHouse, verifyPassword } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
-import { loadView, loadVisited, saveView, saveVisited, toggleVisited, type View } from './lib/progress';
+import {
+  applyAutoVisit,
+  applyToggle,
+  loadView,
+  loadVisited,
+  saveView,
+  saveVisited,
+  type View,
+  type VisitState,
+} from './lib/progress';
 import type { House, NewHouse } from './lib/types';
 
 const REFRESH_MS = 60_000;
@@ -29,7 +38,9 @@ export default function App() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [houses, setHouses] = useState<House[]>([]);
   const [loadError, setLoadError] = useState(false);
-  const [visited, setVisited] = useState(() => loadVisited(storage));
+  const [visits, setVisits] = useState<VisitState>(() => ({ visited: loadVisited(storage), dismissed: new Set() }));
+  const visited = visits.visited;
+  const [editing, setEditing] = useState<House | null>(null);
   const [view, setView] = useState<View>(() => loadView(storage));
 
   const refresh = useCallback(async () => {
@@ -56,8 +67,10 @@ export default function App() {
 
   useEffect(() => saveVisited(storage, visited), [storage, visited]);
 
-  const onToggle = useCallback((id: string) => setVisited((v) => toggleVisited(v, id)), []);
-  const onAutoVisit = useCallback((id: string) => setVisited((v) => (v.has(id) ? v : new Set(v).add(id))), []);
+  // A house the kid unmarks by hand is not checked off again automatically, even if
+  // they are still standing next to it.
+  const onToggle = useCallback((id: string) => setVisits((s) => applyToggle(s, id)), []);
+  const onAutoVisit = useCallback((id: string) => setVisits((s) => applyAutoVisit(s, id)), []);
 
   // Any call that finds the password no longer valid locks the panel again.
   async function asAdmin<T>(action: (password: string) => Promise<T>): Promise<T> {
@@ -70,6 +83,8 @@ export default function App() {
   }
 
   const handleAdd = (house: NewHouse) => asAdmin((pw) => addHouse(supabase, house, pw));
+
+  const handleUpdate = (id: string, house: NewHouse) => asAdmin((pw) => updateHouse(supabase, id, house, pw));
 
   async function handleRemove(id: string) {
     await asAdmin((pw) => removeHouse(supabase, id, pw));
@@ -103,11 +118,32 @@ export default function App() {
       <main className="main">
         {adminOpen && adminPassword ? (
           <AdminPanel
-            onClose={() => setAdminOpen(false)}
+            onClose={() => {
+              setEditing(null);
+              setAdminOpen(false);
+            }}
             onLock={() => {
+              setEditing(null);
               setAdminPassword(null);
               setAdminOpen(false);
             }}
+            editForm={
+              editing && (
+                <AddHouseForm
+                  key={editing.id}
+                  initial={editing}
+                  submit={(h) => handleUpdate(editing.id, h)}
+                  geocode={(q) => geocodeAddress(q)}
+                  reverseGeocode={(p) => reverseGeocode(p)}
+                  locate={locateOnce}
+                  onAdded={() => {
+                    setEditing(null);
+                    refresh();
+                  }}
+                  onCancel={() => setEditing(null)}
+                />
+              )
+            }
             addForm={
               <AddHouseForm
                 submit={handleAdd}
@@ -117,7 +153,7 @@ export default function App() {
                 onAdded={refresh}
               />
             }
-            removeList={<HouseList houses={houses} onRemove={handleRemove} />}
+            removeList={<HouseList houses={houses} onRemove={handleRemove} onEdit={setEditing} />}
           />
         ) : (
           <KidMap

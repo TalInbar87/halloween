@@ -37,6 +37,24 @@ export function toggleVisited(visited: ReadonlySet<string>, id: string): Set<str
   return next;
 }
 
+export interface VisitState {
+  visited: ReadonlySet<string>;
+  /** Houses the kid unmarked by hand; automatic check-off must leave them alone. */
+  dismissed: ReadonlySet<string>;
+}
+
+export function applyToggle(state: VisitState, id: string): VisitState {
+  const dismissed = new Set(state.dismissed);
+  if (state.visited.has(id)) dismissed.add(id);
+  else dismissed.delete(id);
+  return { visited: toggleVisited(state.visited, id), dismissed };
+}
+
+export function applyAutoVisit(state: VisitState, id: string): VisitState {
+  if (state.visited.has(id) || state.dismissed.has(id)) return state;
+  return { ...state, visited: new Set(state.visited).add(id) };
+}
+
 export type View = 'map' | 'table';
 
 /** Kid's last choice between the map and the table. */

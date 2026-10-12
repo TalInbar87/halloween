@@ -1,9 +1,13 @@
 import { distanceMeters } from './geo';
 import type { House } from './types';
 
-/** "street, city · דירה 4, קומה 2" */
-export function formatAddress(h: Pick<House, 'address' | 'apartment' | 'floor'>): string {
-  const parts = [h.apartment && `דירה ${h.apartment}`, h.floor && `קומה ${h.floor}`].filter(Boolean);
+/** "street, city · דירה 4, קומה 2, קוד בניין 1234#" */
+export function formatAddress(h: Pick<House, 'address' | 'apartment' | 'floor' | 'building_code'>): string {
+  const parts = [
+    h.apartment && `דירה ${h.apartment}`,
+    h.floor && `קומה ${h.floor}`,
+    h.building_code && `קוד בניין ${h.building_code}`,
+  ].filter(Boolean);
   return parts.length ? `${h.address} · ${parts.join(', ')}` : h.address;
 }
 

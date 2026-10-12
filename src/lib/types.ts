@@ -8,6 +8,7 @@ export interface House extends LatLng {
   address: string;
   apartment: string | null;
   floor: string | null;
+  building_code: string | null;
   notes: string | null;
   created_at: string;
 }
@@ -16,5 +17,6 @@ export interface NewHouse extends LatLng {
   address: string;
   apartment: string | null;
   floor: string | null;
+  building_code: string | null;
   notes: string | null;
 }

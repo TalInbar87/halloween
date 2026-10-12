@@ -7,6 +7,7 @@ const house = (id: string, over: Partial<House> = {}): House => ({
   address: 'הירדן 12, קרית אונו',
   apartment: null,
   floor: null,
+  building_code: null,
   lat: 32.05,
   lng: 34.858,
   notes: null,
@@ -21,6 +22,12 @@ describe('formatAddress', () => {
 
   it('appends apartment and floor', () => {
     expect(formatAddress(house('a', { apartment: '4', floor: '2' }))).toBe('הירדן 12, קרית אונו · דירה 4, קומה 2');
+  });
+
+  it('appends the building code', () => {
+    expect(formatAddress(house('a', { apartment: '4', building_code: '1234#' }))).toBe(
+      'הירדן 12, קרית אונו · דירה 4, קוד בניין 1234#',
+    );
   });
 
   it('appends only what exists', () => {

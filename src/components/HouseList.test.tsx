@@ -9,6 +9,7 @@ const house = (id: string, address: string, over: Partial<House> = {}): House =>
   address,
   apartment: null,
   floor: null,
+  building_code: null,
   lat: 32.05,
   lng: 34.858,
   notes: null,
@@ -22,7 +23,7 @@ const houses = [
 ];
 
 function setup(over: Partial<Parameters<typeof HouseList>[0]> = {}) {
-  const props = { houses, onRemove: vi.fn().mockResolvedValue(undefined), ...over };
+  const props = { houses, onRemove: vi.fn().mockResolvedValue(undefined), onEdit: vi.fn(), ...over };
   render(<HouseList {...props} />);
   return { ...props, user: userEvent.setup() };
 }
@@ -47,6 +48,13 @@ describe('HouseList', () => {
     const { user } = setup();
     await user.type(search(), 'רחוב אחר');
     expect(screen.getByText(/לא נמצאה/)).toBeInTheDocument();
+  });
+
+  it('opens a house for editing', async () => {
+    const { user, onEdit } = setup();
+    await user.type(search(), 'צהל');
+    await user.click(screen.getByRole('button', { name: 'עריכה' }));
+    expect(onEdit).toHaveBeenCalledWith(houses[1]);
   });
 
   it('asks to confirm before removing', async () => {

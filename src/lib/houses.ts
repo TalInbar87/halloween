@@ -3,7 +3,7 @@ import type { House, NewHouse } from './types';
 
 // Anonymous visitors can only read these columns. Adding and removing go through
 // SQL functions that check the adults password and rate-limit (see supabase/migrations).
-const PUBLIC_COLUMNS = 'id,address,apartment,floor,lat,lng,notes,created_at';
+const PUBLIC_COLUMNS = 'id,address,apartment,floor,building_code,lat,lng,notes,created_at';
 
 type RpcResult = { ok?: boolean; error?: string; id?: string } | null;
 
@@ -20,6 +20,7 @@ export async function addHouse(client: SupabaseClient, house: NewHouse, password
     p_address: house.address,
     p_apartment: house.apartment,
     p_floor: house.floor,
+    p_building_code: house.building_code,
     p_notes: house.notes,
     p_lat: house.lat,
     p_lng: house.lng,
@@ -28,6 +29,24 @@ export async function addHouse(client: SupabaseClient, house: NewHouse, password
   const result = data as RpcResult;
   if (!result?.ok || !result.id) throw new Error(result?.error ?? 'empty_response');
   return result.id;
+}
+
+/** Replaces an existing house's details and pin. Throws `wrong_password`, `not_found`, `duplicate_house`, … */
+export async function updateHouse(client: SupabaseClient, id: string, house: NewHouse, password: string): Promise<void> {
+  const { data, error } = await client.rpc('update_house', {
+    p_password: password,
+    p_id: id,
+    p_address: house.address,
+    p_apartment: house.apartment,
+    p_floor: house.floor,
+    p_building_code: house.building_code,
+    p_notes: house.notes,
+    p_lat: house.lat,
+    p_lng: house.lng,
+  });
+  if (error) throw new Error(error.message);
+  const result = data as RpcResult;
+  if (!result?.ok) throw new Error(result?.error ?? 'empty_response');
 }
 
 export async function removeHouse(client: SupabaseClient, id: string, password: string): Promise<void> {
@@ -50,6 +69,7 @@ export function friendlyError(err: unknown): string {
   if (msg.includes('wrong_password')) return 'סיסמה שגויה';
   if (msg.includes('rate_limited')) return 'נשלחו יותר מדי בקשות. נסו שוב בעוד כמה דקות.';
   if (msg.includes('duplicate_house')) return 'הבית הזה כבר מופיע במפה.';
+  if (msg.includes('not_found')) return 'הבית כבר לא קיים במפה.';
   if (msg.includes('map_full')) return 'המפה מלאה כרגע. פנו למארגנים.';
   return 'משהו השתבש. נסו שוב.';
 }

@@ -9,6 +9,7 @@ const house = (id: string, address: string, lat: number, over: Partial<House> = 
   address,
   apartment: null,
   floor: null,
+  building_code: null,
   lat,
   lng: 34.858,
   notes: null,

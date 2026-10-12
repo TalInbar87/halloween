@@ -7,24 +7,60 @@ const api = vi.hoisted(() => ({
   addHouse: vi.fn(),
   removeHouse: vi.fn(),
   verifyPassword: vi.fn(),
+  updateHouse: vi.fn(),
 }));
+
+const fixtureHouse = {
+  id: 'h9',
+  address: 'נהר הירדן 23, קרית אונו',
+  apartment: '20',
+  floor: '5',
+  building_code: null,
+  notes: null,
+  lat: 32.0507,
+  lng: 34.858,
+  created_at: 'x',
+};
 
 vi.mock('./lib/supabase', () => ({ supabase: {}, supabaseConfigured: true }));
 vi.mock('./lib/houses', async (orig) => ({ ...(await orig<typeof import('./lib/houses')>()), ...api }));
 // Leaflet needs a real browser; the map itself is covered elsewhere.
-vi.mock('./components/KidMap', () => ({ KidMap: () => <div data-testid="kid-map" /> }));
+vi.mock('./components/KidMap', () => ({
+  KidMap: (p: { visited: Set<string>; onToggle: (id: string) => void; onAutoVisit: (id: string) => void }) => (
+    <div data-testid="kid-map">
+      <span data-testid="visited">{[...p.visited].join(',')}</span>
+      <button type="button" onClick={() => p.onToggle('h9')}>
+        stub-toggle
+      </button>
+      <button type="button" onClick={() => p.onAutoVisit('h9')}>
+        stub-auto
+      </button>
+    </div>
+  ),
+}));
 vi.mock('./components/AddHouseForm', () => ({
-  AddHouseForm: (p: { submit: (h: unknown) => Promise<unknown> }) => (
-    <button
-      type="button"
-      onClick={() =>
-        p.submit({ address: 'הירדן 12', apartment: null, floor: null, notes: null, lat: 32.05, lng: 34.858 }).catch(
-          () => undefined,
-        )
-      }
-    >
-      stub-add
-    </button>
+  AddHouseForm: (p: { submit: (h: unknown) => Promise<unknown>; initial?: { address: string } }) => (
+    <div>
+      {p.initial && <span data-testid="editing">{p.initial.address}</span>}
+      <button
+        type="button"
+        onClick={() =>
+          p
+            .submit({
+              address: 'הירדן 12',
+              apartment: null,
+              floor: null,
+              building_code: null,
+              notes: null,
+              lat: 32.05,
+              lng: 34.858,
+            })
+            .catch(() => undefined)
+        }
+      >
+        stub-add
+      </button>
+    </div>
   ),
 }));
 
@@ -32,7 +68,9 @@ import App from './App';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
   api.fetchHouses.mockResolvedValue([]);
+  api.updateHouse.mockResolvedValue(undefined);
   api.verifyPassword.mockResolvedValue(undefined);
   api.addHouse.mockResolvedValue('h1');
 });
@@ -98,5 +136,30 @@ describe('App', () => {
     await unlock(user);
     await user.click(await screen.findByRole('button', { name: 'stub-add' }));
     await waitFor(() => expect(screen.getByRole('dialog', { name: 'כניסת מבוגרים' })).toBeInTheDocument());
+  });
+
+  it('edits an existing house from the admin list', async () => {
+    api.fetchHouses.mockResolvedValue([fixtureHouse]);
+    const user = userEvent.setup();
+    render(<App />);
+    await unlock(user);
+    await user.click(await screen.findByRole('button', { name: 'הסרה ועריכה' }));
+    await user.type(screen.getByRole('combobox', { name: /חפשו כתובת/ }), 'נהר');
+    await user.click(screen.getByRole('button', { name: 'עריכה' }));
+    expect(screen.getByTestId('editing')).toHaveTextContent('נהר הירדן 23');
+    await user.click(screen.getByRole('button', { name: 'stub-add' }));
+    await waitFor(() =>
+      expect(api.updateHouse).toHaveBeenCalledWith({}, 'h9', expect.objectContaining({ address: 'הירדן 12' }), 'secret'),
+    );
+  });
+
+  it('does not re-check a house the kid just unmarked while standing next to it', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
+    expect(screen.getByTestId('visited')).toHaveTextContent('h9');
+    await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
+    await user.click(screen.getByRole('button', { name: 'stub-auto' }));
+    expect(screen.getByTestId('visited')).toHaveTextContent('');
   });
 });

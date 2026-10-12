@@ -6,6 +6,7 @@ import type { NewHouse } from './types';
 export const ADDRESS_MAX = 200;
 export const NOTES_MAX = 200;
 export const UNIT_MAX = 10;
+export const BUILDING_CODE_MAX = 20;
 
 // eslint-disable-next-line no-control-regex
 const NO_CONTROL_CHARS = /^[^\u0000-\u001f\u007f]*$/;
@@ -22,6 +23,7 @@ const schema = z.object({
     .regex(NO_CONTROL_CHARS, 'תווים לא חוקיים'),
   apartment: optionalText(UNIT_MAX),
   floor: optionalText(UNIT_MAX),
+  buildingCode: optionalText(BUILDING_CODE_MAX),
   notes: optionalText(NOTES_MAX),
   location: z
     .object({ lat: z.number().nullable(), lng: z.number().nullable() })
@@ -34,6 +36,7 @@ export interface HouseFormInput {
   address: string;
   apartment: string;
   floor: string;
+  buildingCode: string;
   notes: string;
   lat: number | null;
   lng: number | null;
@@ -41,7 +44,7 @@ export interface HouseFormInput {
 }
 
 export type HouseFormErrors = Partial<
-  Record<'address' | 'apartment' | 'floor' | 'notes' | 'location' | 'consent', string>
+  Record<'address' | 'apartment' | 'floor' | 'buildingCode' | 'notes' | 'location' | 'consent', string>
 >;
 
 export type ValidationResult = { ok: true; value: NewHouse } | { ok: false; errors: HouseFormErrors };
@@ -51,6 +54,7 @@ export function validateHouseInput(input: HouseFormInput): ValidationResult {
     address: input.address,
     apartment: input.apartment,
     floor: input.floor,
+    buildingCode: input.buildingCode,
     notes: input.notes,
     location: { lat: input.lat, lng: input.lng },
     consent: input.consent,
@@ -63,13 +67,14 @@ export function validateHouseInput(input: HouseFormInput): ValidationResult {
     }
     return { ok: false, errors };
   }
-  const { address, apartment, floor, notes, location } = parsed.data;
+  const { address, apartment, floor, buildingCode, notes, location } = parsed.data;
   return {
     ok: true,
     value: {
       address,
       apartment: apartment || null,
       floor: floor || null,
+      building_code: buildingCode || null,
       notes: notes || null,
       lat: location.lat!,
       lng: location.lng!,

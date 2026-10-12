@@ -7,6 +7,7 @@ const house = (id: string, lat: number, lng: number): House => ({
   address: `addr ${id}`,
   apartment: null,
   floor: null,
+  building_code: null,
   lat,
   lng,
   notes: null,
