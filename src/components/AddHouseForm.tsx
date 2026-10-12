@@ -1,7 +1,8 @@
 import { useState, type ComponentType, type FormEvent } from 'react';
 import {
   validateHouseInput,
-  ADDRESS_MAX,
+  HOUSE_NUMBER_MAX,
+  STREET_MAX,
   BUILDING_CODE_MAX,
   NOTES_MAX,
   UNIT_MAX,
@@ -9,8 +10,11 @@ import {
 } from '../lib/validation';
 import { friendlyError } from '../lib/houses';
 import type { GeocodeResult } from '../lib/geocode';
+import { splitAddress } from '../lib/houseList';
 import type { House, LatLng, NewHouse } from '../lib/types';
 import { MapPicker } from './MapPicker';
+
+const CITY_NAME = 'קרית אונו';
 
 export interface PickerProps {
   value: LatLng | null;
@@ -20,7 +24,7 @@ export interface PickerProps {
 interface Props {
   submit: (house: NewHouse) => Promise<unknown>;
   geocode: (query: string) => Promise<GeocodeResult[]>;
-  reverseGeocode: (point: LatLng) => Promise<string | null>;
+  reverseGeocode: (point: LatLng) => Promise<{ street: string; houseNumber: string } | null>;
   locate: () => Promise<LatLng>;
   onAdded: () => void;
   /** Edit an existing house instead of adding a new one. */
@@ -40,7 +44,11 @@ export function AddHouseForm({
   Picker = MapPicker,
 }: Props) {
   const editing = Boolean(initial);
-  const [address, setAddress] = useState(initial?.address ?? '');
+  // Older rows only have free-text `address`; split it so they can be edited too.
+  const initialParts =
+    initial && (initial.street ?? null) === null ? splitAddress(initial.address) : null;
+  const [street, setStreet] = useState(initial?.street ?? initialParts?.street ?? '');
+  const [houseNumber, setHouseNumber] = useState(initial?.house_number ?? initialParts?.houseNumber ?? '');
   const [apartment, setApartment] = useState(initial?.apartment ?? '');
   const [floor, setFloor] = useState(initial?.floor ?? '');
   const [buildingCode, setBuildingCode] = useState(initial?.building_code ?? '');
@@ -58,7 +66,7 @@ export function AddHouseForm({
     setSearchMsg(null);
     setSearching(true);
     try {
-      const [first] = await geocode(address);
+      const [first] = await geocode(`${street.trim()} ${houseNumber.trim()}, ${CITY_NAME}`);
       if (first) {
         setPin({ lat: first.lat, lng: first.lng });
         setSearchMsg('מצאנו! גררו את הסיכה בדיוק לבית שלכם.');
@@ -84,7 +92,7 @@ export function AddHouseForm({
       return;
     }
     setPin(here);
-    if (address.trim()) {
+    if (street.trim()) {
       setSearchMsg('סימנו את המיקום שלכם. גררו את הסיכה אם צריך.');
       setSearching(false);
       return;
@@ -92,7 +100,8 @@ export function AddHouseForm({
     try {
       const found = await reverseGeocode(here);
       if (found) {
-        setAddress(found);
+        setStreet(found.street);
+        setHouseNumber(found.houseNumber);
         setSearchMsg('מילאנו את הכתובת לפי המיקום. בדקו שהיא נכונה.');
       } else {
         setSearchMsg('סימנו את המיקום. הקלידו את הכתובת.');
@@ -108,7 +117,8 @@ export function AddHouseForm({
     e.preventDefault();
     setServerError(null);
     const result = validateHouseInput({
-      address,
+      street,
+      houseNumber,
       apartment,
       floor,
       buildingCode,
@@ -145,7 +155,8 @@ export function AddHouseForm({
           className="btn secondary"
           onClick={() => {
             setSuccess(false);
-            setAddress('');
+            setStreet('');
+            setHouseNumber('');
             setApartment('');
             setFloor('');
             setBuildingCode('');
@@ -165,16 +176,36 @@ export function AddHouseForm({
     <form className="card form" onSubmit={handleSubmit} noValidate>
       <h2>{editing ? 'עריכת בית' : 'מחלקים ממתקים? הוסיפו את הבית'}</h2>
 
-      <label htmlFor="address">כתובת</label>
-      <input
-        id="address"
-        value={address}
-        maxLength={ADDRESS_MAX}
-        autoComplete="street-address"
-        placeholder="רחוב ומספר, עיר"
-        onChange={(e) => setAddress(e.target.value)}
-        aria-invalid={!!errors.address}
-      />
+      <div className="street-row">
+        <div className="street-field">
+          <label htmlFor="street">רחוב</label>
+          <input
+            id="street"
+            value={street}
+            maxLength={STREET_MAX}
+            autoComplete="address-line1"
+            placeholder="למשל: נהר הירדן"
+            onChange={(e) => setStreet(e.target.value)}
+            aria-invalid={!!errors.street}
+          />
+        </div>
+        <div className="number-field">
+          <label htmlFor="house-number">מספר</label>
+          <input
+            id="house-number"
+            value={houseNumber}
+            maxLength={HOUSE_NUMBER_MAX}
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="27"
+            onChange={(e) => setHouseNumber(e.target.value)}
+            aria-invalid={!!errors.houseNumber}
+          />
+        </div>
+      </div>
+      <p className="city">
+        עיר: <strong>{CITY_NAME}</strong>
+      </p>
       <div className="address-actions">
         <button type="button" className="btn secondary" onClick={handleSearch} disabled={searching}>
           חפשו במפה
@@ -184,7 +215,8 @@ export function AddHouseForm({
           אני בבית עכשיו, השתמשו במיקום שלי
         </button>
       </div>
-      {errors.address && <p className="error">{errors.address}</p>}
+      {errors.street && <p className="error">{errors.street}</p>}
+      {errors.houseNumber && <p className="error">{errors.houseNumber}</p>}
       {searchMsg && <p className="hint">{searchMsg}</p>}
 
       <div className="unit-row">

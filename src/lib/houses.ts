@@ -3,7 +3,7 @@ import type { House, NewHouse } from './types';
 
 // Anonymous visitors can only read these columns. Adding and removing go through
 // SQL functions that check the adults password and rate-limit (see supabase/migrations).
-const PUBLIC_COLUMNS = 'id,address,apartment,floor,building_code,lat,lng,notes,created_at';
+const PUBLIC_COLUMNS = 'id,address,street,house_number,apartment,floor,building_code,lat,lng,notes,created_at';
 
 type RpcResult = { ok?: boolean; error?: string; id?: string } | null;
 
@@ -17,7 +17,8 @@ export async function fetchHouses(client: SupabaseClient): Promise<House[]> {
 export async function addHouse(client: SupabaseClient, house: NewHouse, password: string): Promise<string> {
   const { data, error } = await client.rpc('add_house', {
     p_password: password,
-    p_address: house.address,
+    p_street: house.street,
+    p_house_number: house.house_number,
     p_apartment: house.apartment,
     p_floor: house.floor,
     p_building_code: house.building_code,
@@ -36,7 +37,8 @@ export async function updateHouse(client: SupabaseClient, id: string, house: New
   const { data, error } = await client.rpc('update_house', {
     p_password: password,
     p_id: id,
-    p_address: house.address,
+    p_street: house.street,
+    p_house_number: house.house_number,
     p_apartment: house.apartment,
     p_floor: house.floor,
     p_building_code: house.building_code,

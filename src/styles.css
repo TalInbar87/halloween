@@ -633,3 +633,39 @@ button:focus-visible {
   align-items: center;
   gap: 8px;
 }
+
+/* Street + number */
+.street-row {
+  display: flex;
+  gap: 12px;
+}
+
+.street-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.street-field {
+  flex: 1;
+}
+
+.number-field {
+  width: 6.5rem;
+}
+
+.street-row input {
+  width: 100%;
+}
+
+.city {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.city strong {
+  color: var(--text);
+  font-weight: 500;
+}

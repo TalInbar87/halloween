@@ -17,8 +17,8 @@ function StubPicker({ value, onChange }: PickerProps) {
 function setup(overrides: Partial<Parameters<typeof AddHouseForm>[0]> = {}) {
   const props = {
     submit: vi.fn().mockResolvedValue('h1'),
-    geocode: vi.fn().mockResolvedValue([{ lat: 32.051, lng: 34.859, label: 'הירדן 12, קרית אונו' }]),
-    reverseGeocode: vi.fn().mockResolvedValue('הירדן 14, קרית אונו'),
+    geocode: vi.fn().mockResolvedValue([{ lat: 32.051, lng: 34.859, label: 'נהר הירדן 12, קרית אונו' }]),
+    reverseGeocode: vi.fn().mockResolvedValue({ street: 'נהר הירדן', houseNumber: '14' }),
     locate: vi.fn().mockResolvedValue({ lat: 32.0508, lng: 34.8581 }),
     onAdded: vi.fn(),
     Picker: StubPicker,
@@ -29,12 +29,27 @@ function setup(overrides: Partial<Parameters<typeof AddHouseForm>[0]> = {}) {
 }
 
 const submitBtn = () => screen.getByRole('button', { name: 'הוסיפו לי את הבית' });
+const street = () => screen.getByLabelText('רחוב');
+const number = () => screen.getByLabelText('מספר');
+
+async function typeAddress(user: ReturnType<typeof userEvent.setup>, s: string, n: string) {
+  await user.type(street(), s);
+  await user.type(number(), n);
+}
 
 describe('AddHouseForm', () => {
+  it('has separate street and number fields, with the city fixed to Kiryat Ono', () => {
+    setup();
+    expect(street().closest('.street-row')).toBe(number().closest('.street-row'));
+    expect(screen.getByText('קרית אונו')).toBeInTheDocument();
+    expect(screen.queryByLabelText('כתובת')).not.toBeInTheDocument();
+  });
+
   it('shows validation errors in Hebrew and does not submit', async () => {
     const { submit, user } = setup();
     await user.click(submitBtn());
-    expect(await screen.findByText('נא להזין כתובת')).toBeInTheDocument();
+    expect(await screen.findByText('נא להזין רחוב')).toBeInTheDocument();
+    expect(screen.getByText('נא להזין מספר בית')).toBeInTheDocument();
     expect(screen.getByText('נא לסמן את הבית על המפה')).toBeInTheDocument();
     expect(screen.getByText('נא לאשר הצגת הכתובת במפה')).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
@@ -57,7 +72,9 @@ describe('AddHouseForm', () => {
   describe('edit mode', () => {
     const initial = {
       id: 'h9',
-      address: 'נהר הירדן 23, קרית אונו',
+      address: 'נהר הירדן 23',
+      street: 'נהר הירדן',
+      house_number: '23',
       apartment: '20',
       floor: '5',
       building_code: null,
@@ -70,7 +87,8 @@ describe('AddHouseForm', () => {
     it('starts filled with the existing house, pin included and consent given', () => {
       setup({ initial });
       expect(screen.getByRole('heading', { name: 'עריכת בית' })).toBeInTheDocument();
-      expect(screen.getByLabelText('כתובת')).toHaveValue('נהר הירדן 23, קרית אונו');
+      expect(street()).toHaveValue('נהר הירדן');
+      expect(number()).toHaveValue('23');
       expect(screen.getByLabelText('דירה')).toHaveValue('20');
       expect(screen.getByLabelText('קומה')).toHaveValue('5');
       expect(screen.getByLabelText(/הערות/)).toHaveValue('בלי בוטנים');
@@ -78,15 +96,22 @@ describe('AddHouseForm', () => {
       expect(screen.getByLabelText(/מסכימים/)).toBeChecked();
     });
 
+    it('splits an old free-text address that has no street/number yet', () => {
+      setup({ initial: { ...initial, address: 'נהר הירדן 27 קרית אונו', street: null, house_number: null } });
+      expect(street()).toHaveValue('נהר הירדן');
+      expect(number()).toHaveValue('27');
+    });
+
     it('saves the edited values', async () => {
       const { submit, onAdded, user } = setup({ initial });
-      await user.clear(screen.getByLabelText('כתובת'));
-      await user.type(screen.getByLabelText('כתובת'), 'נהר הירדן 25, קרית אונו');
+      await user.clear(number());
+      await user.type(number(), '25');
       await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
       await user.click(screen.getByRole('button', { name: 'שמירת שינויים' }));
       await waitFor(() =>
         expect(submit).toHaveBeenCalledWith({
-          address: 'נהר הירדן 25, קרית אונו',
+          street: 'נהר הירדן',
+          house_number: '25',
           apartment: '20',
           floor: '5',
           building_code: null,
@@ -128,44 +153,45 @@ describe('AddHouseForm', () => {
     expect(search.closest('.address-actions')).not.toBeNull();
   });
 
-  it('finds the address and drops the pin there', async () => {
+  it('searches street + number in Kiryat Ono and drops the pin there', async () => {
     const { geocode, user } = setup();
-    await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await typeAddress(user, 'נהר הירדן', '12');
     await user.click(screen.getByRole('button', { name: 'חפשו במפה' }));
-    expect(geocode).toHaveBeenCalledWith('הירדן 12');
+    expect(geocode).toHaveBeenCalledWith('נהר הירדן 12, קרית אונו');
     await waitFor(() => expect(screen.getByTestId('pin')).toHaveTextContent('32.051,34.859'));
   });
 
   it('tells the user when the address was not found', async () => {
     const { user } = setup({ geocode: vi.fn().mockResolvedValue([]) });
-    await user.type(screen.getByLabelText('כתובת'), 'רחוב שלא קיים');
+    await typeAddress(user, 'רחוב שלא קיים', '1');
     await user.click(screen.getByRole('button', { name: 'חפשו במפה' }));
     expect(await screen.findByText(/לא מצאנו/)).toBeInTheDocument();
   });
 
   it('tells the user when the address search fails', async () => {
     const { user } = setup({ geocode: vi.fn().mockRejectedValue(new Error('429')) });
-    await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await typeAddress(user, 'נהר הירדן', '12');
     await user.click(screen.getByRole('button', { name: 'חפשו במפה' }));
     expect(await screen.findByText(/החיפוש לא זמין/)).toBeInTheDocument();
   });
 
-  it('uses my location: drops the pin and fills the address', async () => {
+  it('uses my location: drops the pin and fills street and number', async () => {
     const { locate, reverseGeocode, user } = setup();
     await user.click(screen.getByRole('button', { name: /השתמשו במיקום שלי/ }));
     expect(locate).toHaveBeenCalled();
     await waitFor(() => expect(screen.getByTestId('pin')).toHaveTextContent('32.0508,34.8581'));
     expect(reverseGeocode).toHaveBeenCalledWith({ lat: 32.0508, lng: 34.8581 });
-    await waitFor(() => expect(screen.getByLabelText('כתובת')).toHaveValue('הירדן 14, קרית אונו'));
+    await waitFor(() => expect(street()).toHaveValue('נהר הירדן'));
+    expect(number()).toHaveValue('14');
   });
 
   it('does not overwrite an address the user already typed', async () => {
     const { reverseGeocode, user } = setup();
-    await user.type(screen.getByLabelText('כתובת'), 'הירדן 20');
+    await user.type(street(), 'נהר הירדן');
     await user.click(screen.getByRole('button', { name: /השתמשו במיקום שלי/ }));
     await waitFor(() => expect(screen.getByTestId('pin')).toHaveTextContent('32.0508,34.8581'));
     expect(reverseGeocode).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('כתובת')).toHaveValue('הירדן 20');
+    expect(street()).toHaveValue('נהר הירדן');
   });
 
   it('keeps the pin and asks for the address when reverse lookup fails', async () => {
@@ -184,7 +210,7 @@ describe('AddHouseForm', () => {
 
   it('submits a valid house and reports success', async () => {
     const { submit, onAdded, user } = setup();
-    await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await typeAddress(user, 'נהר הירדן', '12');
     await user.type(screen.getByLabelText('דירה'), '4');
     await user.type(screen.getByLabelText('קומה'), '2');
     await user.type(screen.getByLabelText('קוד לבניין'), '1234#');
@@ -194,7 +220,8 @@ describe('AddHouseForm', () => {
     await user.click(submitBtn());
     await waitFor(() =>
       expect(submit).toHaveBeenCalledWith({
-        address: 'הירדן 12',
+        street: 'נהר הירדן',
+        house_number: '12',
         apartment: '4',
         floor: '2',
         building_code: '1234#',
@@ -209,7 +236,7 @@ describe('AddHouseForm', () => {
 
   it('shows a friendly error when the server rejects', async () => {
     const { user } = setup({ submit: vi.fn().mockRejectedValue(new Error('rate_limited')) });
-    await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await typeAddress(user, 'נהר הירדן', '12');
     await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
     await user.click(screen.getByLabelText(/מסכימים/));
     await user.click(submitBtn());
@@ -218,12 +245,12 @@ describe('AddHouseForm', () => {
 
   it('says so when the adults password is wrong, and keeps the form filled', async () => {
     const { user } = setup({ submit: vi.fn().mockRejectedValue(new Error('wrong_password')) });
-    await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await typeAddress(user, 'נהר הירדן', '12');
     await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
     await user.click(screen.getByLabelText(/מסכימים/));
     await user.click(submitBtn());
     expect(await screen.findByRole('alert')).toHaveTextContent('סיסמה שגויה');
-    expect(screen.getByLabelText('כתובת')).toHaveValue('הירדן 12');
+    expect(street()).toHaveValue('נהר הירדן');
   });
 
   it('has no password field (the admin panel is already unlocked)', () => {

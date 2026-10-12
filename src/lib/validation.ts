@@ -3,7 +3,8 @@ import { isInServiceArea } from './geo';
 import type { NewHouse } from './types';
 
 // Limits must match the add_house SQL function.
-export const ADDRESS_MAX = 200;
+export const STREET_MAX = 100;
+export const HOUSE_NUMBER_MAX = 5;
 export const NOTES_MAX = 200;
 export const UNIT_MAX = 10;
 export const BUILDING_CODE_MAX = 20;
@@ -15,12 +16,20 @@ const optionalText = (max: number) =>
   z.string().trim().max(max, `עד ${max} תווים`).regex(NO_CONTROL_CHARS, 'תווים לא חוקיים');
 
 const schema = z.object({
-  address: z
+  street: z
     .string()
-    .trim()
-    .min(3, 'נא להזין כתובת')
-    .max(ADDRESS_MAX, `עד ${ADDRESS_MAX} תווים`)
-    .regex(NO_CONTROL_CHARS, 'תווים לא חוקיים'),
+    .transform((v) => v.replace(/\s+/g, ' ').trim())
+    .pipe(
+      z
+        .string()
+        .min(2, 'נא להזין רחוב')
+        .max(STREET_MAX, `עד ${STREET_MAX} תווים`)
+        .regex(NO_CONTROL_CHARS, 'תווים לא חוקיים'),
+    ),
+  houseNumber: z
+    .string()
+    .transform((v) => v.replace(/\s+/g, ''))
+    .pipe(z.string().min(1, 'נא להזין מספר בית').regex(/^\d{1,4}[א-ת]?$/, 'מספר בית לא תקין (למשל 27 או 27א)')),
   apartment: optionalText(UNIT_MAX),
   floor: optionalText(UNIT_MAX),
   buildingCode: optionalText(BUILDING_CODE_MAX),
@@ -33,7 +42,8 @@ const schema = z.object({
 });
 
 export interface HouseFormInput {
-  address: string;
+  street: string;
+  houseNumber: string;
   apartment: string;
   floor: string;
   buildingCode: string;
@@ -44,14 +54,15 @@ export interface HouseFormInput {
 }
 
 export type HouseFormErrors = Partial<
-  Record<'address' | 'apartment' | 'floor' | 'buildingCode' | 'notes' | 'location' | 'consent', string>
+  Record<'street' | 'houseNumber' | 'apartment' | 'floor' | 'buildingCode' | 'notes' | 'location' | 'consent', string>
 >;
 
 export type ValidationResult = { ok: true; value: NewHouse } | { ok: false; errors: HouseFormErrors };
 
 export function validateHouseInput(input: HouseFormInput): ValidationResult {
   const parsed = schema.safeParse({
-    address: input.address,
+    street: input.street,
+    houseNumber: input.houseNumber,
     apartment: input.apartment,
     floor: input.floor,
     buildingCode: input.buildingCode,
@@ -67,11 +78,12 @@ export function validateHouseInput(input: HouseFormInput): ValidationResult {
     }
     return { ok: false, errors };
   }
-  const { address, apartment, floor, buildingCode, notes, location } = parsed.data;
+  const { street, houseNumber, apartment, floor, buildingCode, notes, location } = parsed.data;
   return {
     ok: true,
     value: {
-      address,
+      street,
+      house_number: houseNumber,
       apartment: apartment || null,
       floor: floor || null,
       building_code: buildingCode || null,

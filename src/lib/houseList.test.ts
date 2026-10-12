@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { addressKey, formatAddress, groupByLocation, searchHouses } from './houseList';
+import { addressKey, formatAddress, groupByLocation, searchHouses, splitAddress } from './houseList';
 import type { House } from './types';
 
 const house = (id: string, over: Partial<House> = {}): House => ({
   id,
   address: 'הירדן 12, קרית אונו',
+  street: null,
+  house_number: null,
   apartment: null,
   floor: null,
   building_code: null,
@@ -53,7 +55,27 @@ describe('addressKey', () => {
   });
 });
 
+describe('splitAddress', () => {
+  it.each([
+    ['נהר הירדן 27 קרית אונו', 'נהר הירדן', '27'],
+    ['נהר הירדן 25 קריית אונו', 'נהר הירדן', '25'],
+    ['רחוב נחל גמלא 8, קרית אונו', 'נחל גמלא', '8'],
+    ['יפה נוף 38א', 'יפה נוף', '38א'],
+    ['יפה נוף', 'יפה נוף', ''],
+  ])('%s → %s / %s', (address, street, houseNumber) => {
+    expect(splitAddress(address)).toEqual({ street, houseNumber });
+  });
+});
+
 describe('groupByLocation', () => {
+  it('groups by the street/number columns when they are set', () => {
+    const groups = groupByLocation([
+      house('a', { address: 'x', street: 'נהר הירדן', house_number: '27', lat: 32.05 }),
+      house('b', { address: 'y', street: 'נהר הירדן ', house_number: '27', lat: 32.051 }),
+    ]);
+    expect(groups).toHaveLength(1);
+  });
+
   it('unites the same street and number written differently (real data)', () => {
     const groups = groupByLocation([
       house('a', { address: 'נהר הירדן 27 קרית אונו', apartment: '29', lat: 32.0505 }),

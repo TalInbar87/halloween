@@ -12,7 +12,9 @@ const api = vi.hoisted(() => ({
 
 const fixtureHouse = {
   id: 'h9',
-  address: 'נהר הירדן 23, קרית אונו',
+  address: 'נהר הירדן 23',
+  street: 'נהר הירדן',
+  house_number: '23',
   apartment: '20',
   floor: '5',
   building_code: null,
@@ -47,7 +49,8 @@ vi.mock('./components/AddHouseForm', () => ({
         onClick={() =>
           p
             .submit({
-              address: 'הירדן 12',
+              street: 'נהר הירדן',
+              house_number: '12',
               apartment: null,
               floor: null,
               building_code: null,
@@ -102,7 +105,7 @@ describe('App', () => {
     await unlock(user);
     expect(await screen.findByRole('heading', { name: 'ניהול בתים' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'stub-add' }));
-    expect(api.addHouse).toHaveBeenCalledWith({}, expect.objectContaining({ address: 'הירדן 12' }), 'secret');
+    expect(api.addHouse).toHaveBeenCalledWith({}, expect.objectContaining({ street: 'נהר הירדן', house_number: '12' }), 'secret');
   });
 
   it('stays locked after a wrong password', async () => {
@@ -149,7 +152,7 @@ describe('App', () => {
     expect(screen.getByTestId('editing')).toHaveTextContent('נהר הירדן 23');
     await user.click(screen.getByRole('button', { name: 'stub-add' }));
     await waitFor(() =>
-      expect(api.updateHouse).toHaveBeenCalledWith({}, 'h9', expect.objectContaining({ address: 'הירדן 12' }), 'secret'),
+      expect(api.updateHouse).toHaveBeenCalledWith({}, 'h9', expect.objectContaining({ street: 'נהר הירדן', house_number: '12' }), 'secret'),
     );
   });
 

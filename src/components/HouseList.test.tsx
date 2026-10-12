@@ -7,6 +7,8 @@ import type { House } from '../lib/types';
 const house = (id: string, address: string, over: Partial<House> = {}): House => ({
   id,
   address,
+  street: null,
+  house_number: null,
   apartment: null,
   floor: null,
   building_code: null,

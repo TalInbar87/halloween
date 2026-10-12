@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { validateHouseInput } from './validation';
 
 const valid = {
-  address: 'הרצל 10, ראשון לציון',
+  street: 'נהר הירדן',
+  houseNumber: '27',
   apartment: '',
   floor: '',
   buildingCode: '',
@@ -55,15 +56,31 @@ describe('validateHouseInput', () => {
     expect(r.ok && r.value.notes).toBe(null);
   });
 
-  it('requires an address of at least 3 characters', () => {
-    const r = validateHouseInput({ ...valid, address: ' א ' });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors.address).toBeDefined();
+  it('passes street and number through, trimmed', () => {
+    const r = validateHouseInput({ ...valid, street: '  נהר  הירדן ', houseNumber: ' 27א ' });
+    expect(r.ok && r.value.street).toBe('נהר הירדן');
+    expect(r.ok && r.value.house_number).toBe('27א');
   });
 
-  it('caps address length', () => {
-    const r = validateHouseInput({ ...valid, address: 'א'.repeat(201) });
+  it('requires a street of at least 2 characters', () => {
+    const r = validateHouseInput({ ...valid, street: ' א ' });
     expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.street).toBe('נא להזין רחוב');
+  });
+
+  it('caps street length', () => {
+    const r = validateHouseInput({ ...valid, street: 'א'.repeat(101) });
+    expect(r.ok).toBe(false);
+  });
+
+  it.each(['', 'אבג', '12345', '27-29'])('rejects house number %j', (houseNumber) => {
+    const r = validateHouseInput({ ...valid, houseNumber });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.houseNumber).toBeDefined();
+  });
+
+  it.each(['5', '27', '27א', '1234'])('accepts house number %j', (houseNumber) => {
+    expect(validateHouseInput({ ...valid, houseNumber }).ok).toBe(true);
   });
 
   it('caps notes length', () => {
@@ -91,7 +108,7 @@ describe('validateHouseInput', () => {
   });
 
   it('rejects control characters in text', () => {
-    const r = validateHouseInput({ ...valid, address: 'הרצל\u0000 10' });
+    const r = validateHouseInput({ ...valid, street: 'נהר\u0000 הירדן' });
     expect(r.ok).toBe(false);
   });
 });

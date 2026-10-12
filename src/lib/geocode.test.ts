@@ -15,19 +15,19 @@ describe('buildReverseUrl', () => {
 describe('reverseGeocode', () => {
   const ok = (body: unknown) => vi.fn().mockResolvedValue({ ok: true, json: async () => body });
 
-  it('builds "street number, city" from address parts', async () => {
-    const fetchFn = ok({ address: { road: 'הירדן', house_number: '12', city: 'קרית אונו' }, display_name: 'long' });
-    expect(await reverseGeocode({ lat: 32.05, lng: 34.858 }, fetchFn)).toBe('הירדן 12, קרית אונו');
+  it('returns street and house number', async () => {
+    const fetchFn = ok({ address: { road: 'נהר הירדן', house_number: '12', city: 'קרית אונו' }, display_name: 'long' });
+    expect(await reverseGeocode({ lat: 32.05, lng: 34.858 }, fetchFn)).toEqual({ street: 'נהר הירדן', houseNumber: '12' });
   });
 
-  it('falls back to town and omits a missing house number', async () => {
-    const fetchFn = ok({ address: { road: 'הירדן', town: 'קרית אונו' } });
-    expect(await reverseGeocode({ lat: 32.05, lng: 34.858 }, fetchFn)).toBe('הירדן, קרית אונו');
+  it('returns an empty number when only the street is known', async () => {
+    const fetchFn = ok({ address: { road: 'נהר הירדן', town: 'קרית אונו' } });
+    expect(await reverseGeocode({ lat: 32.05, lng: 34.858 }, fetchFn)).toEqual({ street: 'נהר הירדן', houseNumber: '' });
   });
 
-  it('falls back to display_name when there is no road', async () => {
+  it('returns null when there is no street', async () => {
     const fetchFn = ok({ address: {}, display_name: 'גינת עבר הירדן, קרית אונו' });
-    expect(await reverseGeocode({ lat: 32.05, lng: 34.858 }, fetchFn)).toBe('גינת עבר הירדן, קרית אונו');
+    expect(await reverseGeocode({ lat: 32.05, lng: 34.858 }, fetchFn)).toBeNull();
   });
 
   it('returns null when nothing usable comes back', async () => {

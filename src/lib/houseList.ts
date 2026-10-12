@@ -36,7 +36,20 @@ export function addressKey(address: string): string {
     .toLowerCase();
 }
 
-const sameAddress = (a: string, b: string) => addressKey(a) === addressKey(b);
+/** Old free text "נהר הירדן 27 קרית אונו" → { street: "נהר הירדן", houseNumber: "27" }. */
+export function splitAddress(address: string): { street: string; houseNumber: string } {
+  const clean = address
+    .split(',')[0]
+    .replace(CITY, ' ')
+    .replace(/^\s*(רחוב|רח'?)\s+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const m = clean.match(/^(.*?)\s*(\d+\s*[א-ת]?)$/);
+  return m ? { street: m[1].trim(), houseNumber: m[2].replace(/\s+/g, '') } : { street: clean, houseNumber: '' };
+}
+
+const groupKey = (h: House) =>
+  h.street && h.house_number ? addressKey(`${h.street} ${h.house_number}`) : addressKey(h.address);
 
 /**
  * One tappable marker per building: apartments with the same address are grouped even if
@@ -46,7 +59,7 @@ export function groupByLocation(houses: House[], radiusM = 4): HouseGroup[] {
   const groups: HouseGroup[] = [];
   for (const h of houses) {
     const group = groups.find(
-      (g) => sameAddress(g.houses[0].address, h.address) || distanceMeters(g, h) <= radiusM,
+      (g) => groupKey(g.houses[0]) === groupKey(h) || distanceMeters(g, h) <= radiusM,
     );
     if (group) group.houses.push(h);
     else groups.push({ key: h.id, lat: h.lat, lng: h.lng, houses: [h] });

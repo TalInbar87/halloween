@@ -29,21 +29,16 @@ export function buildReverseUrl(point: { lat: number; lng: number }): string {
   return url.toString();
 }
 
-/** Coordinates → "street number, city" (or Nominatim's full label), null if unknown. */
+/** Coordinates → street + house number (null if there's no street there). */
 export async function reverseGeocode(
   point: { lat: number; lng: number },
   fetchFn: FetchLike = fetch,
-): Promise<string | null> {
+): Promise<{ street: string; houseNumber: string } | null> {
   const res = await fetchFn(buildReverseUrl(point));
   if (!res.ok) throw new Error(`reverse_failed_${res.status ?? ''}`);
-  const data = (await res.json()) as { address?: Record<string, string>; display_name?: unknown };
+  const data = (await res.json()) as { address?: Record<string, string> };
   const a = data?.address ?? {};
-  if (a.road) {
-    const street = [a.road, a.house_number].filter(Boolean).join(' ');
-    const city = a.city ?? a.town ?? a.village;
-    return [street, city].filter(Boolean).join(', ');
-  }
-  return typeof data?.display_name === 'string' ? data.display_name : null;
+  return a.road ? { street: a.road, houseNumber: a.house_number ?? '' } : null;
 }
 
 export async function geocodeAddress(query: string, fetchFn: FetchLike = fetch): Promise<GeocodeResult[]> {

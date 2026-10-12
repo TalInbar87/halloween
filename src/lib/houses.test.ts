@@ -14,7 +14,7 @@ describe('fetchHouses', () => {
   it('selects only public columns', async () => {
     const { client, select } = clientWith({ select: { data: [], error: null } });
     await fetchHouses(client);
-    expect(select).toHaveBeenCalledWith('id,address,apartment,floor,building_code,lat,lng,notes,created_at');
+    expect(select).toHaveBeenCalledWith('id,address,street,house_number,apartment,floor,building_code,lat,lng,notes,created_at');
   });
 
   it('returns rows', async () => {
@@ -30,14 +30,15 @@ describe('fetchHouses', () => {
 });
 
 describe('addHouse', () => {
-  const input = { address: 'הרצל 10', apartment: '4', floor: '2', building_code: '12#', notes: null, lat: 31.96, lng: 34.8 };
+  const input = { street: 'הרצל', house_number: '10', apartment: '4', floor: '2', building_code: '12#', notes: null, lat: 31.96, lng: 34.8 };
 
   it('calls add_house with the adults password and returns the id', async () => {
     const { client, rpc } = clientWith({ rpc: { data: { ok: true, id: 'h1' }, error: null } });
     expect(await addHouse(client, input, 'secret')).toBe('h1');
     expect(rpc).toHaveBeenCalledWith('add_house', {
       p_password: 'secret',
-      p_address: 'הרצל 10',
+      p_street: 'הרצל',
+      p_house_number: '10',
       p_apartment: '4',
       p_floor: '2',
       p_building_code: '12#',
@@ -64,7 +65,7 @@ describe('addHouse', () => {
 });
 
 describe('updateHouse', () => {
-  const input = { address: 'הרצל 12', apartment: null, floor: '1', building_code: null, notes: 'x', lat: 31.97, lng: 34.81 };
+  const input = { street: 'הרצל', house_number: '12', apartment: null, floor: '1', building_code: null, notes: 'x', lat: 31.97, lng: 34.81 };
 
   it('calls update_house with the id and adults password', async () => {
     const { client, rpc } = clientWith({ rpc: { data: { ok: true, id: 'h1' }, error: null } });
@@ -72,7 +73,8 @@ describe('updateHouse', () => {
     expect(rpc).toHaveBeenCalledWith('update_house', {
       p_password: 'secret',
       p_id: 'h1',
-      p_address: 'הרצל 12',
+      p_street: 'הרצל',
+      p_house_number: '12',
       p_apartment: null,
       p_floor: '1',
       p_building_code: null,
