@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadVisited, saveVisited, toggleVisited, loadOwnedHouses, saveOwnedHouse, forgetOwnedHouse } from './progress';
+import { loadVisited, saveVisited, toggleVisited, loadView, saveView } from './progress';
 
 function memoryStorage(): Storage {
   const data = new Map<string, string>();
@@ -64,29 +64,25 @@ describe('visited progress', () => {
   });
 });
 
-describe('owned houses (removal tokens)', () => {
-  it('saves and loads a token per house', () => {
-    const s = memoryStorage();
-    saveOwnedHouse(s, 'h1', 'tok1');
-    saveOwnedHouse(s, 'h2', 'tok2');
-    expect(loadOwnedHouses(s)).toEqual({ h1: 'tok1', h2: 'tok2' });
+describe('map/table view preference', () => {
+  it('defaults to the map', () => {
+    expect(loadView(memoryStorage())).toBe('map');
   });
 
-  it('forgets a house', () => {
+  it('round-trips the table view', () => {
     const s = memoryStorage();
-    saveOwnedHouse(s, 'h1', 'tok1');
-    forgetOwnedHouse(s, 'h1');
-    expect(loadOwnedHouses(s)).toEqual({});
+    saveView(s, 'table');
+    expect(loadView(s)).toBe('table');
   });
 
-  it('ignores corrupt data', () => {
+  it('ignores unknown values', () => {
     const s = memoryStorage();
-    s.setItem('halloween.owned.v1', '[1,2]');
-    expect(loadOwnedHouses(s)).toEqual({});
+    s.setItem('halloween.view.v1', JSON.stringify('grid'));
+    expect(loadView(s)).toBe('map');
   });
 
   it('survives storage that throws', () => {
-    expect(loadOwnedHouses(throwingStorage())).toEqual({});
-    expect(() => saveOwnedHouse(throwingStorage(), 'h', 't')).not.toThrow();
+    expect(loadView(throwingStorage())).toBe('map');
+    expect(() => saveView(throwingStorage(), 'table')).not.toThrow();
   });
 });

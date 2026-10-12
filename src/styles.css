@@ -467,3 +467,96 @@ button:focus-visible {
   margin-top: 12px;
   font-size: 0.8rem;
 }
+
+/* Map / table switch */
+.view-toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.view-toggle button {
+  font: inherit;
+  font-size: 0.9rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  padding: 6px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.view-toggle button[aria-pressed='true'] {
+  background: var(--orange);
+  color: #1a0f00;
+  font-weight: 500;
+}
+
+/* House table */
+.table-wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 0 16px 16px;
+}
+
+.table-empty {
+  padding: 16px;
+}
+
+.house-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.house-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-align: start;
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.house-table td {
+  padding: 12px 6px;
+  border-bottom: 1px solid var(--surface-2);
+  vertical-align: middle;
+}
+
+.row-address {
+  display: block;
+}
+
+.row-notes {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.row-distance {
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.row-check {
+  width: 1%;
+  text-align: center;
+}
+
+.row-check input {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--green);
+}
+
+.house-table tr.is-done .row-address {
+  color: var(--muted);
+  text-decoration: line-through;
+}

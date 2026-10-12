@@ -2,7 +2,7 @@
 // (private mode, cleared site data), so every access is wrapped.
 
 const VISITED_KEY = 'halloween.visited.v1';
-const OWNED_KEY = 'halloween.owned.v1';
+const VIEW_KEY = 'halloween.view.v1';
 
 function readJson(storage: Storage, key: string): unknown {
   try {
@@ -37,21 +37,13 @@ export function toggleVisited(visited: ReadonlySet<string>, id: string): Set<str
   return next;
 }
 
-/** Houses added from this device, mapped to the secret token that lets us remove them. */
-export function loadOwnedHouses(storage: Storage): Record<string, string> {
-  const data = readJson(storage, OWNED_KEY);
-  if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
-  return Object.fromEntries(
-    Object.entries(data as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string'),
-  );
+export type View = 'map' | 'table';
+
+/** Kid's last choice between the map and the table. */
+export function loadView(storage: Storage): View {
+  return readJson(storage, VIEW_KEY) === 'table' ? 'table' : 'map';
 }
 
-export function saveOwnedHouse(storage: Storage, id: string, token: string): void {
-  writeJson(storage, OWNED_KEY, { ...loadOwnedHouses(storage), [id]: token });
-}
-
-export function forgetOwnedHouse(storage: Storage, id: string): void {
-  const owned = loadOwnedHouses(storage);
-  delete owned[id];
-  writeJson(storage, OWNED_KEY, owned);
+export function saveView(storage: Storage, view: View): void {
+  writeJson(storage, VIEW_KEY, view);
 }

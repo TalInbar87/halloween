@@ -16,7 +16,7 @@ function StubPicker({ value, onChange }: PickerProps) {
 
 function setup(overrides: Partial<Parameters<typeof AddHouseForm>[0]> = {}) {
   const props = {
-    submit: vi.fn().mockResolvedValue({ id: 'h1', deleteToken: 't1' }),
+    submit: vi.fn().mockResolvedValue('h1'),
     geocode: vi.fn().mockResolvedValue([{ lat: 32.051, lng: 34.859, label: 'הירדן 12, קרית אונו' }]),
     reverseGeocode: vi.fn().mockResolvedValue('הירדן 14, קרית אונו'),
     locate: vi.fn().mockResolvedValue({ lat: 32.0508, lng: 34.8581 }),
@@ -37,7 +37,7 @@ describe('AddHouseForm', () => {
     expect(await screen.findByText('נא להזין כתובת')).toBeInTheDocument();
     expect(screen.getByText('נא לסמן את הבית על המפה')).toBeInTheDocument();
     expect(screen.getByText('נא לאשר הצגת הכתובת במפה')).toBeInTheDocument();
-    expect(screen.getByText('קוד של 4 ספרות')).toBeInTheDocument();
+    expect(screen.getByText('נא להזין את סיסמת המבוגרים')).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
   });
 
@@ -116,32 +116,50 @@ describe('AddHouseForm', () => {
     await user.type(screen.getByLabelText('דירה'), '4');
     await user.type(screen.getByLabelText('קומה'), '2');
     await user.type(screen.getByLabelText(/הערות/), 'ממתקים בלי בוטנים');
-    await user.type(screen.getByLabelText(/קוד הסרה/), '1234');
+    await user.type(screen.getByLabelText('סיסמת מבוגרים'), 'secret');
     await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
     await user.click(screen.getByLabelText(/מסכימים/));
     await user.click(submitBtn());
     await waitFor(() =>
-      expect(submit).toHaveBeenCalledWith({
-        address: 'הירדן 12',
-        apartment: '4',
-        floor: '2',
-        notes: 'ממתקים בלי בוטנים',
-        pin: '1234',
-        lat: 32.05,
-        lng: 34.858,
-      }),
+      expect(submit).toHaveBeenCalledWith(
+        {
+          address: 'הירדן 12',
+          apartment: '4',
+          floor: '2',
+          notes: 'ממתקים בלי בוטנים',
+          lat: 32.05,
+          lng: 34.858,
+        },
+        'secret',
+      ),
     );
-    expect(onAdded).toHaveBeenCalledWith({ id: 'h1', deleteToken: 't1' });
+    expect(onAdded).toHaveBeenCalled();
     expect(await screen.findByText(/הבית נוסף/)).toBeInTheDocument();
   });
 
   it('shows a friendly error when the server rejects', async () => {
     const { user } = setup({ submit: vi.fn().mockRejectedValue(new Error('rate_limited')) });
     await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
-    await user.type(screen.getByLabelText(/קוד הסרה/), '1234');
+    await user.type(screen.getByLabelText('סיסמת מבוגרים'), 'secret');
     await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
     await user.click(screen.getByLabelText(/מסכימים/));
     await user.click(submitBtn());
     expect(await screen.findByRole('alert')).toHaveTextContent(/יותר מדי/);
+  });
+
+  it('says so when the adults password is wrong, and keeps the form filled', async () => {
+    const { user } = setup({ submit: vi.fn().mockRejectedValue(new Error('wrong_password')) });
+    await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await user.type(screen.getByLabelText('סיסמת מבוגרים'), 'nope');
+    await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
+    await user.click(screen.getByLabelText(/מסכימים/));
+    await user.click(submitBtn());
+    expect(await screen.findByRole('alert')).toHaveTextContent('סיסמה שגויה');
+    expect(screen.getByLabelText('כתובת')).toHaveValue('הירדן 12');
+  });
+
+  it('uses a masked password field', () => {
+    setup();
+    expect(screen.getByLabelText('סיסמת מבוגרים')).toHaveAttribute('type', 'password');
   });
 });

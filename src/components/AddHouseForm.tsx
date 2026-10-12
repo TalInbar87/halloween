@@ -11,11 +11,11 @@ export interface PickerProps {
 }
 
 interface Props {
-  submit: (house: NewHouse) => Promise<{ id: string; deleteToken: string }>;
+  submit: (house: NewHouse, password: string) => Promise<string>;
   geocode: (query: string) => Promise<GeocodeResult[]>;
   reverseGeocode: (point: LatLng) => Promise<string | null>;
   locate: () => Promise<LatLng>;
-  onAdded: (result: { id: string; deleteToken: string }) => void;
+  onAdded: () => void;
   Picker?: ComponentType<PickerProps>;
 }
 
@@ -24,7 +24,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
   const [apartment, setApartment] = useState('');
   const [floor, setFloor] = useState('');
   const [notes, setNotes] = useState('');
-  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [pin, setPin] = useState<LatLng | null>(null);
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<HouseFormErrors>({});
@@ -92,7 +92,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       apartment,
       floor,
       notes,
-      pin: code,
+      password,
       lat: pin?.lat ?? null,
       lng: pin?.lng ?? null,
       consent,
@@ -104,8 +104,8 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
     setErrors({});
     setSending(true);
     try {
-      const added = await submit(result.value);
-      onAdded(added);
+      await submit(result.value, result.password);
+      onAdded();
       setSuccess(true);
     } catch (err) {
       setServerError(friendlyError(err));
@@ -119,10 +119,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       <div className="card success">
         <h2>הבית נוסף למפה!</h2>
         <p>הילדים כבר יכולים לראות אותו.</p>
-        <p>
-          נגמרו הממתקים? בלשונית "רשימת הבתים" מחפשים את הכתובת ומסירים אותה. מהמכשיר הזה אפשר להסיר מיד, ומכל מכשיר
-          אחר עם קוד ההסרה שבחרתם.
-        </p>
+        <p>נגמרו הממתקים? בלשונית "רשימת הבתים" מחפשים את הכתובת ומסירים אותה עם סיסמת המבוגרים.</p>
         <button
           type="button"
           className="btn secondary"
@@ -132,7 +129,7 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
             setApartment('');
             setFloor('');
             setNotes('');
-            setCode('');
+            setPassword('');
             setPin(null);
             setConsent(false);
             setSearchMsg(null);
@@ -210,22 +207,18 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       <Picker value={pin} onChange={setPin} />
       {errors.location && <p className="error">{errors.location}</p>}
 
-      <label htmlFor="code">קוד הסרה (4 ספרות)</label>
+      <label htmlFor="adult-password">סיסמת מבוגרים</label>
       <input
-        id="code"
-        className="code-input"
-        value={code}
-        maxLength={4}
-        inputMode="numeric"
+        id="adult-password"
+        type="password"
+        value={password}
         autoComplete="off"
-        pattern="[0-9]*"
-        placeholder="••••"
-        onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-        aria-invalid={!!errors.pin}
-        aria-describedby="code-hint"
+        onChange={(e) => setPassword(e.target.value)}
+        aria-invalid={!!errors.password}
+        aria-describedby="password-hint"
       />
-      <p id="code-hint" className="hint">בחרו קוד ותזכרו אותו: בעזרתו תוכלו להסיר את הבית מהמפה מכל טלפון.</p>
-      {errors.pin && <p className="error">{errors.pin}</p>}
+      <p id="password-hint" className="hint">רק מבוגרים יכולים להוסיף בתים. את הסיסמה מקבלים ממארגני השכונה.</p>
+      {errors.password && <p className="error">{errors.password}</p>}
 
       <label className="check">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

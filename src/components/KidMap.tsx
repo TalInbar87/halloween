@@ -6,6 +6,8 @@ import { findAutoVisit, nearestUnvisited } from '../lib/geo';
 import { formatAddress, groupByLocation } from '../lib/houseList';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { ProgressBar } from './ProgressBar';
+import { HouseTable } from './HouseTable';
+import type { View } from '../lib/progress';
 import { AutoResize, OsmTiles, defaultCenter, groupIcon, meIcon } from './mapShared';
 
 interface Props {
@@ -13,6 +15,8 @@ interface Props {
   visited: ReadonlySet<string>;
   onToggle: (id: string) => void;
   onAutoVisit: (id: string) => void;
+  view: View;
+  onViewChange: (view: View) => void;
 }
 
 function FitHouses({ houses }: { houses: House[] }) {
@@ -67,7 +71,7 @@ const GEO_MESSAGES: Record<string, string> = {
   unsupported: 'הדפדפן הזה לא תומך במיקום.',
 };
 
-export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
+export function KidMap({ houses, visited, onToggle, onAutoVisit, view, onViewChange }: Props) {
   const [gpsOn, setGpsOn] = useState(false);
   const geo = useGeolocation(gpsOn);
   const me = geo.status === 'ok' ? geo.position : null;
@@ -88,6 +92,14 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
     <div className="kid">
       <div className="kid-top">
         <ProgressBar visited={visitedCount} total={houses.length} />
+        <div className="view-toggle" role="group" aria-label="תצוגה">
+          <button type="button" aria-pressed={view === 'map'} onClick={() => onViewChange('map')}>
+            מפה
+          </button>
+          <button type="button" aria-pressed={view === 'table'} onClick={() => onViewChange('table')}>
+            טבלה
+          </button>
+        </div>
         {!gpsOn ? (
           <button type="button" className="btn primary" onClick={() => setGpsOn(true)}>
             הראו איפה אני
@@ -104,49 +116,53 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
         )}
       </div>
 
-      <MapContainer center={[center.lat, center.lng]} zoom={16} className="kid-map">
-        <OsmTiles />
-        <AutoResize />
-        <FitHouses houses={houses} />
-        <CenterOnMe position={me} />
-        {groups.map((g) => {
-          const remaining = g.houses.filter((h) => !visited.has(h.id)).length;
-          return (
-            <Marker key={g.key} position={[g.lat, g.lng]} icon={groupIcon(remaining, g.houses.length)}>
-              <Popup>
-                <div className="popup">
-                  {g.houses.map((h) => {
-                    const done = visited.has(h.id);
-                    return (
-                      <div key={h.id} className={`popup-house ${done ? 'is-done' : ''}`}>
-                        <strong>{formatAddress(h)}</strong>
-                        {h.notes && <p>{h.notes}</p>}
-                        <button
-                          type="button"
-                          className={`btn ${done ? 'secondary' : 'primary'}`}
-                          onClick={() => onToggle(h.id)}
-                        >
-                          {done ? 'בטלו סימון' : 'היינו כאן!'}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-        {geo.status === 'ok' && (
-          <>
-            <Circle
-              center={[geo.position.lat, geo.position.lng]}
-              radius={geo.accuracy}
-              pathOptions={{ color: '#7c4dff', weight: 1, fillOpacity: 0.12 }}
-            />
-            <Marker position={[geo.position.lat, geo.position.lng]} icon={meIcon} interactive={false} />
-          </>
-        )}
-      </MapContainer>
+      {view === 'table' ? (
+        <HouseTable houses={houses} visited={visited} position={me} onToggle={onToggle} />
+      ) : (
+        <MapContainer center={[center.lat, center.lng]} zoom={16} className="kid-map">
+          <OsmTiles />
+          <AutoResize />
+          <FitHouses houses={houses} />
+          <CenterOnMe position={me} />
+          {groups.map((g) => {
+            const remaining = g.houses.filter((h) => !visited.has(h.id)).length;
+            return (
+              <Marker key={g.key} position={[g.lat, g.lng]} icon={groupIcon(remaining, g.houses.length)}>
+                <Popup>
+                  <div className="popup">
+                    {g.houses.map((h) => {
+                      const done = visited.has(h.id);
+                      return (
+                        <div key={h.id} className={`popup-house ${done ? 'is-done' : ''}`}>
+                          <strong>{formatAddress(h)}</strong>
+                          {h.notes && <p>{h.notes}</p>}
+                          <button
+                            type="button"
+                            className={`btn ${done ? 'secondary' : 'primary'}`}
+                            onClick={() => onToggle(h.id)}
+                          >
+                            {done ? 'בטלו סימון' : 'היינו כאן!'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+          {geo.status === 'ok' && (
+            <>
+              <Circle
+                center={[geo.position.lat, geo.position.lng]}
+                radius={geo.accuracy}
+                pathOptions={{ color: '#7c4dff', weight: 1, fillOpacity: 0.12 }}
+              />
+              <Marker position={[geo.position.lat, geo.position.lng]} icon={meIcon} interactive={false} />
+            </>
+          )}
+        </MapContainer>
+      )}
     </div>
   );
 }

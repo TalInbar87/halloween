@@ -10,11 +10,18 @@ progress. Neighbours add their house through a form; it appears on the map immed
 - **Kids' location never leaves the phone.** GPS is read in the browser only; visited houses are stored in `localStorage`.
 - No user accounts. The browser uses the Supabase *publishable* key; access is enforced in the DB:
   - anyone can read `houses` (public columns only);
-  - nobody can write the table directly — only via `add_house()` / `remove_house()` SQL functions;
-  - `add_house` validates input, rejects duplicates, and rate-limits (5/hour per IP, 20/min overall, 500 max);
-  - raw IPs and removal tokens are never stored — only SHA-256 hashes.
-- Whoever adds a house gets a removal token saved on their device ("הבתים שלי" tab).
-- Admin cleanup: delete rows in the Supabase dashboard → Table Editor → `houses`.
+  - adding or removing a house requires the shared **adults password**, checked inside the
+    `add_house()` / `remove_house()` SQL functions against a bcrypt hash in `app_secret`
+    (not readable through the API). Wrong guesses: max 10/hour per IP, 50/hour overall;
+  - `add_house` also validates input, rejects duplicates (address + apartment) and caps volume;
+  - raw IPs are never stored — only SHA-256 hashes.
+- The password is **not** in this repo. Set or change it in the Supabase SQL editor:
+  ```sql
+  insert into public.app_secret (id, password_hash)
+  values (1, extensions.crypt('<password>', extensions.gen_salt('bf', 10)))
+  on conflict (id) do update set password_hash = excluded.password_hash;
+  ```
+- Kids can switch the map tab between a map and a table (sorted by distance when GPS is on).
 - Security headers / CSP in `vercel.json`.
 
 ## Setup

@@ -10,3 +10,4 @@ supabase/.branches
 .DS_Store
 .claude/launch.json
 .claude/settings.local.json
+.env*

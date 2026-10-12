@@ -3,17 +3,10 @@ import { KidMap } from './components/KidMap';
 import { AddHouseForm } from './components/AddHouseForm';
 import { HouseList } from './components/HouseList';
 import { supabase, supabaseConfigured } from './lib/supabase';
-import { addHouse, fetchHouses, removeHouse, removeHouseWithPin } from './lib/houses';
+import { addHouse, fetchHouses, removeHouse } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
-import {
-  forgetOwnedHouse,
-  loadOwnedHouses,
-  loadVisited,
-  saveOwnedHouse,
-  saveVisited,
-  toggleVisited,
-} from './lib/progress';
+import { loadView, loadVisited, saveView, saveVisited, toggleVisited, type View } from './lib/progress';
 import type { House } from './lib/types';
 
 type Tab = 'map' | 'add' | 'list';
@@ -34,7 +27,7 @@ export default function App() {
   const [houses, setHouses] = useState<House[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [visited, setVisited] = useState(() => loadVisited(storage));
-  const [owned, setOwned] = useState(() => loadOwnedHouses(storage));
+  const [view, setView] = useState<View>(() => loadView(storage));
 
   const refresh = useCallback(async () => {
     try {
@@ -63,17 +56,14 @@ export default function App() {
   const onToggle = useCallback((id: string) => setVisited((v) => toggleVisited(v, id)), []);
   const onAutoVisit = useCallback((id: string) => setVisited((v) => (v.has(id) ? v : new Set(v).add(id))), []);
 
-  async function handleRemoveOwned(id: string) {
-    await removeHouse(supabase, id, owned[id]);
-    forgetOwnedHouse(storage, id);
-    setOwned(loadOwnedHouses(storage));
+  async function handleRemove(id: string, password: string) {
+    await removeHouse(supabase, id, password);
     refresh();
   }
 
-  async function handleRemoveWithPin(id: string, pin: string) {
-    const removed = await removeHouseWithPin(supabase, id, pin);
-    if (removed) refresh();
-    return removed;
+  function changeView(next: View) {
+    setView(next);
+    saveView(storage, next);
   }
 
   return (
@@ -97,27 +87,27 @@ export default function App() {
       {loadError && <p className="error banner">לא הצלחנו לטעון את הבתים. בודקים שוב בעוד דקה.</p>}
 
       <main className="main">
-        {tab === 'map' && <KidMap houses={houses} visited={visited} onToggle={onToggle} onAutoVisit={onAutoVisit} />}
+        {tab === 'map' && (
+          <KidMap
+            houses={houses}
+            visited={visited}
+            onToggle={onToggle}
+            onAutoVisit={onAutoVisit}
+            view={view}
+            onViewChange={changeView}
+          />
+        )}
         {tab === 'add' && (
           <AddHouseForm
-            submit={(h) => addHouse(supabase, h)}
+            submit={(h, password) => addHouse(supabase, h, password)}
             geocode={(q) => geocodeAddress(q)}
             reverseGeocode={(p) => reverseGeocode(p)}
             locate={locateOnce}
-            onAdded={({ id, deleteToken }) => {
-              saveOwnedHouse(storage, id, deleteToken);
-              setOwned(loadOwnedHouses(storage));
-              refresh();
-            }}
+            onAdded={refresh}
           />
         )}
         {tab === 'list' && (
-          <HouseList
-            houses={houses}
-            owned={owned}
-            onRemoveOwned={handleRemoveOwned}
-            onRemoveWithPin={handleRemoveWithPin}
-          />
+          <HouseList houses={houses} onRemove={handleRemove} />
         )}
       </main>
     </div>

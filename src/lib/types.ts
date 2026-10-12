@@ -17,6 +17,4 @@ export interface NewHouse extends LatLng {
   apartment: string | null;
   floor: string | null;
   notes: string | null;
-  /** 4-digit code that lets the owner remove the house from any device. */
-  pin: string;
 }

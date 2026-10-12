@@ -9,7 +9,7 @@ export const UNIT_MAX = 10;
 
 // eslint-disable-next-line no-control-regex
 const NO_CONTROL_CHARS = /^[^\u0000-\u001f\u007f]*$/;
-export const PIN_PATTERN = /^\d{4}$/;
+export const PASSWORD_MAX = 100;
 
 const optionalText = (max: number) =>
   z.string().trim().max(max, `עד ${max} תווים`).regex(NO_CONTROL_CHARS, 'תווים לא חוקיים');
@@ -24,7 +24,7 @@ const schema = z.object({
   apartment: optionalText(UNIT_MAX),
   floor: optionalText(UNIT_MAX),
   notes: optionalText(NOTES_MAX),
-  pin: z.string().regex(PIN_PATTERN, 'קוד של 4 ספרות'),
+  password: z.string().min(1, 'נא להזין את סיסמת המבוגרים').max(PASSWORD_MAX, 'סיסמה ארוכה מדי'),
   location: z
     .object({ lat: z.number().nullable(), lng: z.number().nullable() })
     .refine((l) => l.lat !== null && l.lng !== null, 'נא לסמן את הבית על המפה')
@@ -37,17 +37,19 @@ export interface HouseFormInput {
   apartment: string;
   floor: string;
   notes: string;
-  pin: string;
+  password: string;
   lat: number | null;
   lng: number | null;
   consent: boolean;
 }
 
 export type HouseFormErrors = Partial<
-  Record<'address' | 'apartment' | 'floor' | 'notes' | 'pin' | 'location' | 'consent', string>
+  Record<'address' | 'apartment' | 'floor' | 'notes' | 'password' | 'location' | 'consent', string>
 >;
 
-export type ValidationResult = { ok: true; value: NewHouse } | { ok: false; errors: HouseFormErrors };
+export type ValidationResult =
+  | { ok: true; value: NewHouse; password: string }
+  | { ok: false; errors: HouseFormErrors };
 
 export function validateHouseInput(input: HouseFormInput): ValidationResult {
   const parsed = schema.safeParse({
@@ -55,7 +57,7 @@ export function validateHouseInput(input: HouseFormInput): ValidationResult {
     apartment: input.apartment,
     floor: input.floor,
     notes: input.notes,
-    pin: input.pin,
+    password: input.password,
     location: { lat: input.lat, lng: input.lng },
     consent: input.consent,
   });
@@ -67,7 +69,7 @@ export function validateHouseInput(input: HouseFormInput): ValidationResult {
     }
     return { ok: false, errors };
   }
-  const { address, apartment, floor, notes, pin, location } = parsed.data;
+  const { address, apartment, floor, notes, password, location } = parsed.data;
   return {
     ok: true,
     value: {
@@ -75,9 +77,9 @@ export function validateHouseInput(input: HouseFormInput): ValidationResult {
       apartment: apartment || null,
       floor: floor || null,
       notes: notes || null,
-      pin,
       lat: location.lat!,
       lng: location.lng!,
     },
+    password,
   };
 }

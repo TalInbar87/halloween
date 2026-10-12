@@ -6,7 +6,7 @@ const valid = {
   apartment: '',
   floor: '',
   notes: '',
-  pin: '1234',
+  password: 'secret',
   lat: 31.96,
   lng: 34.8,
   consent: true,
@@ -37,26 +37,15 @@ describe('validateHouseInput', () => {
     }
   });
 
-  it('requires a 4-digit removal code', () => {
-    for (const pin of ['', '123', '12345', 'abcd', '12 4']) {
-      const r = validateHouseInput({ ...valid, pin });
-      expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.errors.pin).toBeDefined();
-    }
+  it('requires the adults password', () => {
+    const r = validateHouseInput({ ...valid, password: '' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.errors.password).toBe('נא להזין את סיסמת המבוגרים');
   });
 
-  it('passes the removal code through', () => {
-    const r = validateHouseInput({ ...valid, pin: '0420' });
-    expect(r.ok && r.value.pin).toBe('0420');
-  });
-
-  it('accepts a valid house and trims text', () => {
-    const r = validateHouseInput({ ...valid, address: '  הרצל 10  ', notes: '  ממתקים בלי בוטנים ' });
-    expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect(r.value.address).toBe('הרצל 10');
-      expect(r.value.notes).toBe('ממתקים בלי בוטנים');
-    }
+  it('keeps the password out of the house value', () => {
+    const r = validateHouseInput(valid);
+    expect(r.ok && 'password' in r.value).toBe(false);
   });
 
   it('turns empty notes into null', () => {
