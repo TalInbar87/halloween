@@ -194,14 +194,21 @@ body {
   margin-top: 8px;
 }
 
-.row {
+.address-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.row input {
+.address-actions .btn {
   flex: 1;
-  min-width: 0;
+  padding: 10px 8px;
+  font-size: 0.9rem;
+}
+
+.or {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 input:not([type='checkbox']) {

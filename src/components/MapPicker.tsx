@@ -20,17 +20,9 @@ function FlyTo({ value }: { value: LatLng | null }) {
 export function MapPicker({ value, onChange }: PickerProps) {
   const center = value ?? defaultCenter();
 
-  function useMyLocation() {
-    navigator.geolocation?.getCurrentPosition(
-      (p) => onChange({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => alert('לא הצלחנו לקבל מיקום. סמנו את הבית על המפה.'),
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  }
-
   return (
     <div className="picker">
-      <MapContainer center={[center.lat, center.lng]} zoom={value ? 18 : 15} className="picker-map">
+      <MapContainer center={[center.lat, center.lng]} zoom={value ? 18 : 16} className="picker-map">
         <OsmTiles />
         <AutoResize />
         <ClickToPlace onChange={onChange} />
@@ -49,9 +41,6 @@ export function MapPicker({ value, onChange }: PickerProps) {
           />
         )}
       </MapContainer>
-      <button type="button" className="btn link" onClick={useMyLocation}>
-        אני בבית עכשיו, השתמשו במיקום שלי
-      </button>
     </div>
   );
 }

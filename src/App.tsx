@@ -3,7 +3,8 @@ import { KidMap } from './components/KidMap';
 import { AddHouseForm } from './components/AddHouseForm';
 import { supabase, supabaseConfigured } from './lib/supabase';
 import { addHouse, fetchHouses, friendlyError, removeHouse } from './lib/houses';
-import { geocodeAddress } from './lib/geocode';
+import { geocodeAddress, reverseGeocode } from './lib/geocode';
+import { locateOnce } from './lib/locate';
 import {
   forgetOwnedHouse,
   loadOwnedHouses,
@@ -103,6 +104,8 @@ export default function App() {
           <AddHouseForm
             submit={(h) => addHouse(supabase, h)}
             geocode={(q) => geocodeAddress(q)}
+            reverseGeocode={(p) => reverseGeocode(p)}
+            locate={locateOnce}
             onAdded={({ id, deleteToken }) => {
               saveOwnedHouse(storage, id, deleteToken);
               setOwned(loadOwnedHouses(storage));

@@ -82,7 +82,7 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
         )}
       </div>
 
-      <MapContainer center={[center.lat, center.lng]} zoom={15} className="kid-map">
+      <MapContainer center={[center.lat, center.lng]} zoom={16} className="kid-map">
         <OsmTiles />
         <AutoResize />
         <FitHouses houses={houses} />

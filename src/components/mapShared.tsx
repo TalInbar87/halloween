@@ -3,11 +3,14 @@ import L from 'leaflet';
 import { TileLayer, useMap } from 'react-leaflet';
 import type { LatLng } from '../lib/types';
 
-// Fallback center: env override "lat,lng", else central Israel.
+// שכונת עבר הירדן, קרית אונו (גינת עבר הירדן)
+const NEIGHBOURHOOD: LatLng = { lat: 32.0508, lng: 34.8581 };
+
+// Fallback center: env override "lat,lng", else the neighbourhood.
 export function defaultCenter(): LatLng {
   const raw = import.meta.env.VITE_MAP_CENTER as string | undefined;
   const [lat, lng] = (raw ?? '').split(',').map(Number);
-  return Number.isFinite(lat) && Number.isFinite(lng) && raw ? { lat, lng } : { lat: 31.97, lng: 34.79 };
+  return Number.isFinite(lat) && Number.isFinite(lng) && raw ? { lat, lng } : NEIGHBOURHOOD;
 }
 
 export function OsmTiles() {

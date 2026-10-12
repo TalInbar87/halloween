@@ -13,11 +13,13 @@ export interface PickerProps {
 interface Props {
   submit: (house: NewHouse) => Promise<{ id: string; deleteToken: string }>;
   geocode: (query: string) => Promise<GeocodeResult[]>;
+  reverseGeocode: (point: LatLng) => Promise<string | null>;
+  locate: () => Promise<LatLng>;
   onAdded: (result: { id: string; deleteToken: string }) => void;
   Picker?: ComponentType<PickerProps>;
 }
 
-export function AddHouseForm({ submit, geocode, onAdded, Picker = MapPicker }: Props) {
+export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded, Picker = MapPicker }: Props) {
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [pin, setPin] = useState<LatLng | null>(null);
@@ -42,6 +44,38 @@ export function AddHouseForm({ submit, geocode, onAdded, Picker = MapPicker }: P
       }
     } catch {
       setSearchMsg('החיפוש לא זמין כרגע. סמנו את הבית ישירות על המפה.');
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function handleLocate() {
+    setSearchMsg(null);
+    setSearching(true);
+    let here: LatLng;
+    try {
+      here = await locate();
+    } catch {
+      setSearchMsg('לא הצלחנו לקבל מיקום. הקלידו כתובת או סמנו את הבית על המפה.');
+      setSearching(false);
+      return;
+    }
+    setPin(here);
+    if (address.trim()) {
+      setSearchMsg('סימנו את המיקום שלכם. גררו את הסיכה אם צריך.');
+      setSearching(false);
+      return;
+    }
+    try {
+      const found = await reverseGeocode(here);
+      if (found) {
+        setAddress(found);
+        setSearchMsg('מילאנו את הכתובת לפי המיקום. בדקו שהיא נכונה.');
+      } else {
+        setSearchMsg('סימנו את המיקום. הקלידו את הכתובת.');
+      }
+    } catch {
+      setSearchMsg('סימנו את המיקום. הקלידו את הכתובת.');
     } finally {
       setSearching(false);
     }
@@ -96,36 +130,40 @@ export function AddHouseForm({ submit, geocode, onAdded, Picker = MapPicker }: P
       <h2>מחלקים ממתקים? הוסיפו את הבית</h2>
 
       <label htmlFor="address">כתובת</label>
-      <div className="row">
-        <input
-          id="address"
-          value={address}
-          maxLength={ADDRESS_MAX}
-          autoComplete="street-address"
-          placeholder="רחוב ומספר, עיר"
-          onChange={(e) => setAddress(e.target.value)}
-          aria-invalid={!!errors.address}
-        />
+      <input
+        id="address"
+        value={address}
+        maxLength={ADDRESS_MAX}
+        autoComplete="street-address"
+        placeholder="רחוב ומספר, עיר"
+        onChange={(e) => setAddress(e.target.value)}
+        aria-invalid={!!errors.address}
+      />
+      <div className="address-actions">
         <button type="button" className="btn secondary" onClick={handleSearch} disabled={searching}>
           חפשו במפה
+        </button>
+        <span className="or">או</span>
+        <button type="button" className="btn secondary" onClick={handleLocate} disabled={searching}>
+          אני בבית עכשיו, השתמשו במיקום שלי
         </button>
       </div>
       {errors.address && <p className="error">{errors.address}</p>}
       {searchMsg && <p className="hint">{searchMsg}</p>}
 
-      <p className="hint">לחצו על המפה או גררו את הסיכה כדי לסמן את הבית בדיוק.</p>
-      <Picker value={pin} onChange={setPin} />
-      {errors.location && <p className="error">{errors.location}</p>}
-
-      <label htmlFor="notes">הערות (לא חובה)</label>
+      <label htmlFor="notes">הערות לכתובת (לא חובה)</label>
       <input
         id="notes"
         value={notes}
         maxLength={NOTES_MAX}
-        placeholder="למשל: ממתקים בלי בוטנים, מחלקים עד 20:00"
+        placeholder="למשל: קומה 2, ממתקים בלי בוטנים, מחלקים עד 20:00"
         onChange={(e) => setNotes(e.target.value)}
       />
       {errors.notes && <p className="error">{errors.notes}</p>}
+
+      <p className="hint">לחצו על המפה או גררו את הסיכה כדי לסמן את הבית בדיוק.</p>
+      <Picker value={pin} onChange={setPin} />
+      {errors.location && <p className="error">{errors.location}</p>}
 
       <label className="check">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

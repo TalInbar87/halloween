@@ -27,7 +27,7 @@ supabase db push             # applies supabase/migrations
 npm run dev
 ```
 
-Optional: `VITE_MAP_CENTER=lat,lng` sets where the map opens before any houses exist.
+The map opens on Ever HaYarden, Kiryat Ono (override with `VITE_MAP_CENTER=lat,lng`) until houses exist, then fits to them.
 
 ## Scripts
 
