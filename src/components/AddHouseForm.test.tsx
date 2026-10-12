@@ -47,6 +47,20 @@ describe('AddHouseForm', () => {
     expect(notes.compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('places the consent checkbox above the map', () => {
+    setup();
+    const consent = screen.getByLabelText(/מסכימים/);
+    const picker = screen.getByTestId('picker');
+    expect(consent.compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('tells the user to check and fine-tune the pin', () => {
+    setup();
+    expect(
+      screen.getByText('וודאו במפה שהכתובת מדוייקת, ניתן לדייק בעזרת הזזה של הבית למען דיוק מירבי'),
+    ).toBeInTheDocument();
+  });
+
   it('offers "use my location" next to the address search', () => {
     setup();
     const search = screen.getByRole('button', { name: 'חפשו במפה' });

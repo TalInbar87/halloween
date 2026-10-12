@@ -200,14 +200,15 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       />
       {errors.notes && <p className="error">{errors.notes}</p>}
 
-      <p className="hint">לחצו על המפה או גררו את הסיכה כדי לסמן את הבית בדיוק.</p>
-      <Picker value={pin} onChange={setPin} />
-      {errors.location && <p className="error">{errors.location}</p>}
       <label className="check">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
         <span>מסכימים שהכתובת תוצג במפה ציבורית לילדי השכונה</span>
       </label>
       {errors.consent && <p className="error">{errors.consent}</p>}
+
+      <p className="hint">וודאו במפה שהכתובת מדוייקת, ניתן לדייק בעזרת הזזה של הבית למען דיוק מירבי</p>
+      <Picker value={pin} onChange={setPin} />
+      {errors.location && <p className="error">{errors.location}</p>}
 
       {serverError && (
         <p className="error" role="alert">

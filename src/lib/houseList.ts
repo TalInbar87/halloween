@@ -14,11 +14,18 @@ export interface HouseGroup {
   houses: House[];
 }
 
-/** Apartments in one building share a pin; group them so each gets one tappable marker. */
+const sameAddress = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * One tappable marker per building: apartments with the same address are grouped even if
+ * their pins were dropped a bit apart, and so are pins practically on top of each other.
+ */
 export function groupByLocation(houses: House[], radiusM = 4): HouseGroup[] {
   const groups: HouseGroup[] = [];
   for (const h of houses) {
-    const group = groups.find((g) => distanceMeters(g, h) <= radiusM);
+    const group = groups.find(
+      (g) => sameAddress(g.houses[0].address, h.address) || distanceMeters(g, h) <= radiusM,
+    );
     if (group) group.houses.push(h);
     else groups.push({ key: h.id, lat: h.lat, lng: h.lng, houses: [h] });
   }

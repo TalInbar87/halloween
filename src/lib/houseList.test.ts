@@ -33,11 +33,28 @@ describe('groupByLocation', () => {
     const groups = groupByLocation([
       house('a', { apartment: '1' }),
       house('b', { apartment: '2', lat: 32.05001 }), // ~1m away
-      house('c', { lat: 32.051 }), // ~110m away
+      house('c', { address: 'אלון 3, קרית אונו', lat: 32.051 }), // another building, ~110m away
     ]);
     expect(groups).toHaveLength(2);
     expect(groups[0].houses.map((h) => h.id)).toEqual(['a', 'b']);
     expect(groups[1].houses.map((h) => h.id)).toEqual(['c']);
+  });
+
+  it('puts apartments with the same address into one group even if their pins are apart', () => {
+    const groups = groupByLocation([
+      house('a', { address: 'נהר הירדן 23, קרית אונו', apartment: '20' }),
+      house('b', { address: ' נהר הירדן 23, קרית אונו ', apartment: '21', lat: 32.0505 }), // ~55m away
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].houses.map((h) => h.id)).toEqual(['a', 'b']);
+  });
+
+  it('keeps different addresses far apart in separate groups', () => {
+    const groups = groupByLocation([
+      house('a', { address: 'נהר הירדן 23' }),
+      house('b', { address: 'נהר הירדן 25', lat: 32.0505 }),
+    ]);
+    expect(groups).toHaveLength(2);
   });
 
   it('returns an empty list for no houses', () => {

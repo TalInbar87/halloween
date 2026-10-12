@@ -18,7 +18,7 @@ export function AdminPanel({ addForm, removeList, onClose, onLock }: Props) {
         <h2>ניהול בתים</h2>
         <div className="admin-bar-actions">
           <button type="button" className="btn secondary" onClick={onLock}>
-            נעילה
+            התנתק
           </button>
           <button type="button" className="btn primary" onClick={onClose}>
             חזרה למפה

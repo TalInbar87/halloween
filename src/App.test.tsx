@@ -76,7 +76,7 @@ describe('App', () => {
     expect(screen.queryByRole('heading', { name: 'ניהול בתים' })).not.toBeInTheDocument();
   });
 
-  it('remembers the unlock until "lock" is pressed', async () => {
+  it('remembers the unlock until "log out" is pressed', async () => {
     const user = userEvent.setup();
     render(<App />);
     await unlock(user);
@@ -86,7 +86,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'ניהול' }));
     expect(screen.getByRole('heading', { name: 'ניהול בתים' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'נעילה' }));
+    await user.click(screen.getByRole('button', { name: 'התנתק' }));
     await user.click(screen.getByRole('button', { name: 'ניהול' }));
     expect(screen.getByRole('dialog', { name: 'כניסת מבוגרים' })).toBeInTheDocument();
   });
