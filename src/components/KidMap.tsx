@@ -25,12 +25,38 @@ function FitHouses({ houses }: { houses: House[] }) {
   return null;
 }
 
-function Follow({ position, active }: { position: LatLng | null; active: boolean }) {
+/** Centers on the kid once, on the first GPS fix; after that the map pans freely. */
+function CenterOnMe({ position }: { position: LatLng | null }) {
   const map = useMap();
+  const centered = useRef(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const recenter = () => {
+    if (position) map.setView([position.lat, position.lng], Math.max(map.getZoom(), 17));
+  };
+
   useEffect(() => {
-    if (active && position) map.panTo([position.lat, position.lng]);
-  }, [map, active, position]);
-  return null;
+    if (position && !centered.current) {
+      centered.current = true;
+      recenter();
+    }
+  }, [position]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep taps on the button from also reaching the map underneath.
+  useEffect(() => {
+    if (buttonRef.current) L.DomEvent.disableClickPropagation(buttonRef.current);
+  }, [position !== null]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!position) return null;
+  return (
+    <button ref={buttonRef} type="button" className="recenter" onClick={recenter} aria-label="חזרה למיקום שלי" title="חזרה למיקום שלי">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" fill="currentColor" />
+        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
+        <path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
 }
 
 const GEO_MESSAGES: Record<string, string> = {
@@ -42,7 +68,6 @@ const GEO_MESSAGES: Record<string, string> = {
 
 export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
   const [gpsOn, setGpsOn] = useState(false);
-  const [follow, setFollow] = useState(true);
   const geo = useGeolocation(gpsOn);
   const me = geo.status === 'ok' ? geo.position : null;
   const center = defaultCenter();
@@ -73,11 +98,6 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
                 הבית הקרוב: {next.house.address} ({Math.round(next.meters)} מ׳)
               </span>
             )}
-            {me && (
-              <button type="button" className={`btn chip ${follow ? 'on' : ''}`} onClick={() => setFollow((f) => !f)}>
-                {follow ? 'עוקב אחריי' : 'עקבו אחריי'}
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -86,7 +106,7 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
         <OsmTiles />
         <AutoResize />
         <FitHouses houses={houses} />
-        <Follow position={me} active={follow} />
+        <CenterOnMe position={me} />
         {houses.map((h) => {
           const done = visited.has(h.id);
           return (
