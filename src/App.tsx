@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { KidMap } from './components/KidMap';
 import { AddHouseForm } from './components/AddHouseForm';
 import { HouseList } from './components/HouseList';
+import { PasswordPrompt } from './components/PasswordPrompt';
+import { AdminPanel } from './components/AdminPanel';
 import { supabase, supabaseConfigured } from './lib/supabase';
-import { addHouse, fetchHouses, removeHouse } from './lib/houses';
+import { addHouse, fetchHouses, removeHouse, verifyPassword } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
 import { loadView, loadVisited, saveView, saveVisited, toggleVisited, type View } from './lib/progress';
-import type { House } from './lib/types';
-
-type Tab = 'map' | 'add' | 'list';
+import type { House, NewHouse } from './lib/types';
 
 const REFRESH_MS = 60_000;
 
@@ -23,7 +23,10 @@ const safeStorage = (): Storage => {
 
 export default function App() {
   const storage = safeStorage();
-  const [tab, setTab] = useState<Tab>('map');
+  // Adults password, kept in memory only after the server accepted it. Cleared on
+  // "lock", reload, or if the server later rejects it (password was changed).
+  const [adminPassword, setAdminPassword] = useState<string | null>(null);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [houses, setHouses] = useState<House[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [visited, setVisited] = useState(() => loadVisited(storage));
@@ -56,8 +59,20 @@ export default function App() {
   const onToggle = useCallback((id: string) => setVisited((v) => toggleVisited(v, id)), []);
   const onAutoVisit = useCallback((id: string) => setVisited((v) => (v.has(id) ? v : new Set(v).add(id))), []);
 
-  async function handleRemove(id: string, password: string) {
-    await removeHouse(supabase, id, password);
+  // Any call that finds the password no longer valid locks the panel again.
+  async function asAdmin<T>(action: (password: string) => Promise<T>): Promise<T> {
+    try {
+      return await action(adminPassword ?? '');
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('wrong_password')) setAdminPassword(null);
+      throw err;
+    }
+  }
+
+  const handleAdd = (house: NewHouse) => asAdmin((pw) => addHouse(supabase, house, pw));
+
+  async function handleRemove(id: string) {
+    await asAdmin((pw) => removeHouse(supabase, id, pw));
     refresh();
   }
 
@@ -70,24 +85,41 @@ export default function App() {
     <div className="app">
       <header className="header">
         <h1>מפת הממתקים של השכונה</h1>
-        <nav className="tabs" role="tablist">
-          <button role="tab" aria-selected={tab === 'map'} onClick={() => setTab('map')}>
-            מפה
+        {!adminOpen && (
+          <button type="button" className="gear" aria-label="ניהול" title="ניהול (למבוגרים)" onClick={() => setAdminOpen(true)}>
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.48.48 0 0 0 .12-.61l-1.92-3.32a.48.48 0 0 0-.59-.21l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54a7.03 7.03 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.21L2.71 8.87a.48.48 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.63.06.94l-2.03 1.58a.48.48 0 0 0-.12.61l1.92 3.32c.12.21.37.3.59.21l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.09.47 0 .59-.21l1.92-3.32a.48.48 0 0 0-.12-.61l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"
+              />
+            </svg>
           </button>
-          <button role="tab" aria-selected={tab === 'add'} onClick={() => setTab('add')}>
-            הוסיפו בית
-          </button>
-          <button role="tab" aria-selected={tab === 'list'} onClick={() => setTab('list')}>
-            רשימת הבתים
-          </button>
-        </nav>
+        )}
       </header>
 
       {!supabaseConfigured && <p className="error banner">חסרות הגדרות Supabase (VITE_SUPABASE_URL).</p>}
       {loadError && <p className="error banner">לא הצלחנו לטעון את הבתים. בודקים שוב בעוד דקה.</p>}
 
       <main className="main">
-        {tab === 'map' && (
+        {adminOpen && adminPassword ? (
+          <AdminPanel
+            onClose={() => setAdminOpen(false)}
+            onLock={() => {
+              setAdminPassword(null);
+              setAdminOpen(false);
+            }}
+            addForm={
+              <AddHouseForm
+                submit={handleAdd}
+                geocode={(q) => geocodeAddress(q)}
+                reverseGeocode={(p) => reverseGeocode(p)}
+                locate={locateOnce}
+                onAdded={refresh}
+              />
+            }
+            removeList={<HouseList houses={houses} onRemove={handleRemove} />}
+          />
+        ) : (
           <KidMap
             houses={houses}
             visited={visited}
@@ -97,19 +129,15 @@ export default function App() {
             onViewChange={changeView}
           />
         )}
-        {tab === 'add' && (
-          <AddHouseForm
-            submit={(h, password) => addHouse(supabase, h, password)}
-            geocode={(q) => geocodeAddress(q)}
-            reverseGeocode={(p) => reverseGeocode(p)}
-            locate={locateOnce}
-            onAdded={refresh}
-          />
-        )}
-        {tab === 'list' && (
-          <HouseList houses={houses} onRemove={handleRemove} />
-        )}
       </main>
+
+      {adminOpen && !adminPassword && (
+        <PasswordPrompt
+          verify={(pw) => verifyPassword(supabase, pw)}
+          onUnlock={setAdminPassword}
+          onCancel={() => setAdminOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -37,6 +37,14 @@ export async function removeHouse(client: SupabaseClient, id: string, password: 
   if (!result?.ok) throw new Error(result?.error ?? 'empty_response');
 }
 
+/** Checks the adults password before opening the admin panel. Throws `wrong_password`, `rate_limited`, … */
+export async function verifyPassword(client: SupabaseClient, password: string): Promise<void> {
+  const { data, error } = await client.rpc('verify_adult_password', { p_password: password });
+  if (error) throw new Error(error.message);
+  const result = data as RpcResult;
+  if (!result?.ok) throw new Error(result?.error ?? 'empty_response');
+}
+
 export function friendlyError(err: unknown): string {
   const msg = err instanceof Error ? err.message : '';
   if (msg.includes('wrong_password')) return 'סיסמה שגויה';

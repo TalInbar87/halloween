@@ -29,11 +29,10 @@ function setup(over: Partial<Parameters<typeof HouseList>[0]> = {}) {
 
 const search = () => screen.getByRole('combobox', { name: /חפשו כתובת/ });
 
-async function removeVia(user: ReturnType<typeof userEvent.setup>, query: string, password: string) {
+async function removeVia(user: ReturnType<typeof userEvent.setup>, query: string) {
   await user.type(search(), query);
   await user.click(screen.getByRole('button', { name: 'הסירו מהמפה' }));
-  if (password) await user.type(screen.getByLabelText('סיסמת מבוגרים'), password);
-  await user.click(screen.getByRole('button', { name: 'אישור הסרה' }));
+  await user.click(screen.getByRole('button', { name: 'כן, הסירו' }));
 }
 
 describe('HouseList', () => {
@@ -50,36 +49,32 @@ describe('HouseList', () => {
     expect(screen.getByText(/לא נמצאה/)).toBeInTheDocument();
   });
 
-  it('removes a house with the adults password', async () => {
+  it('asks to confirm before removing', async () => {
     const { user, onRemove } = setup();
-    await removeVia(user, 'צהל', 'secret');
-    expect(onRemove).toHaveBeenCalledWith('b', 'secret');
+    await user.type(search(), 'צהל');
+    await user.click(screen.getByRole('button', { name: 'הסירו מהמפה' }));
+    expect(onRemove).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'ביטול' }));
+    expect(screen.getByRole('button', { name: 'הסירו מהמפה' })).toBeInTheDocument();
+  });
+
+  it('removes a house after confirming', async () => {
+    const { user, onRemove } = setup();
+    await removeVia(user, 'צהל');
+    expect(onRemove).toHaveBeenCalledWith('b');
     expect(await screen.findByText(/הוסר מהמפה/)).toBeInTheDocument();
   });
 
-  it('asks for the password in a masked field', async () => {
-    const { user } = setup();
-    await user.type(search(), 'צהל');
-    await user.click(screen.getByRole('button', { name: 'הסירו מהמפה' }));
-    expect(screen.getByLabelText('סיסמת מבוגרים')).toHaveAttribute('type', 'password');
-  });
-
-  it('shows an error for a wrong password', async () => {
-    const { user } = setup({ onRemove: vi.fn().mockRejectedValue(new Error('wrong_password')) });
-    await removeVia(user, 'צהל', 'nope');
-    expect(await screen.findByRole('alert')).toHaveTextContent('סיסמה שגויה');
-  });
-
-  it('shows a friendly error when removal is blocked', async () => {
+  it('shows a friendly error when removal fails', async () => {
     const { user } = setup({ onRemove: vi.fn().mockRejectedValue(new Error('rate_limited')) });
-    await removeVia(user, 'צהל', 'secret');
+    await removeVia(user, 'צהל');
     expect(await screen.findByRole('alert')).toHaveTextContent(/יותר מדי/);
   });
 
-  it('does not send an empty password', async () => {
-    const { user, onRemove } = setup();
-    await removeVia(user, 'צהל', '');
-    expect(onRemove).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('נא להזין את סיסמת המבוגרים');
+  it('does not ask for a password', async () => {
+    const { user } = setup();
+    await user.type(search(), 'צהל');
+    await user.click(screen.getByRole('button', { name: 'הסירו מהמפה' }));
+    expect(screen.queryByLabelText('סיסמת מבוגרים')).not.toBeInTheDocument();
   });
 });

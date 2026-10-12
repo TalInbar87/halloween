@@ -6,7 +6,6 @@ const valid = {
   apartment: '',
   floor: '',
   notes: '',
-  password: 'secret',
   lat: 31.96,
   lng: 34.8,
   consent: true,
@@ -35,17 +34,6 @@ describe('validateHouseInput', () => {
       expect(r.errors.apartment).toBeDefined();
       expect(r.errors.floor).toBeDefined();
     }
-  });
-
-  it('requires the adults password', () => {
-    const r = validateHouseInput({ ...valid, password: '' });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.errors.password).toBe('נא להזין את סיסמת המבוגרים');
-  });
-
-  it('keeps the password out of the house value', () => {
-    const r = validateHouseInput(valid);
-    expect(r.ok && 'password' in r.value).toBe(false);
   });
 
   it('turns empty notes into null', () => {

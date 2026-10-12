@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchHouses, addHouse, removeHouse, friendlyError } from './houses';
+import { fetchHouses, addHouse, removeHouse, verifyPassword, friendlyError } from './houses';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 function clientWith(overrides: { select?: unknown; rpc?: unknown }) {
@@ -77,6 +77,24 @@ describe('removeHouse', () => {
   it('throws on RPC error', async () => {
     const { client } = clientWith({ rpc: { data: null, error: { message: 'rate_limited' } } });
     await expect(removeHouse(client, 'h1', 'secret')).rejects.toThrow('rate_limited');
+  });
+});
+
+describe('verifyPassword', () => {
+  it('resolves when the password is right', async () => {
+    const { client, rpc } = clientWith({ rpc: { data: { ok: true }, error: null } });
+    await verifyPassword(client, 'secret');
+    expect(rpc).toHaveBeenCalledWith('verify_adult_password', { p_password: 'secret' });
+  });
+
+  it('throws wrong_password when rejected', async () => {
+    const { client } = clientWith({ rpc: { data: { ok: false, error: 'wrong_password' }, error: null } });
+    await expect(verifyPassword(client, 'nope')).rejects.toThrow('wrong_password');
+  });
+
+  it('throws on RPC error', async () => {
+    const { client } = clientWith({ rpc: { data: null, error: { message: 'rate_limited' } } });
+    await expect(verifyPassword(client, 'x')).rejects.toThrow('rate_limited');
   });
 });
 

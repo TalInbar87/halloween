@@ -1,39 +1,32 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useState } from 'react';
 import { formatAddress, searchHouses } from '../lib/houseList';
 import { friendlyError } from '../lib/houses';
 import type { House } from '../lib/types';
 
 interface Props {
   houses: House[];
-  /** Rejects with `wrong_password`, `rate_limited`, … */
-  onRemove: (id: string, password: string) => Promise<void>;
+  /** Admin panel is already unlocked; rejects with `rate_limited`, … */
+  onRemove: (id: string) => Promise<void>;
 }
 
-function RemoveWithPassword({ house, onRemove }: { house: House; onRemove: Props['onRemove'] }) {
-  const [open, setOpen] = useState(false);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+function RemoveButton({ house, onRemove }: { house: House; onRemove: Props['onRemove'] }) {
+  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
-  const inputId = useId();
+  const [error, setError] = useState<string | null>(null);
 
-  if (!open) {
+  if (!confirming) {
     return (
-      <button type="button" className="btn danger" onClick={() => setOpen(true)}>
+      <button type="button" className="btn danger" onClick={() => setConfirming(true)}>
         הסירו מהמפה
       </button>
     );
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!password) {
-      setError('נא להזין את סיסמת המבוגרים');
-      return;
-    }
+  async function confirm() {
     setBusy(true);
     setError(null);
     try {
-      await onRemove(house.id, password);
+      await onRemove(house.id);
     } catch (err) {
       setError(friendlyError(err));
       setBusy(false);
@@ -41,25 +34,20 @@ function RemoveWithPassword({ house, onRemove }: { house: House; onRemove: Props
   }
 
   return (
-    <form className="code-form" onSubmit={handleSubmit} noValidate>
-      <label htmlFor={inputId}>סיסמת מבוגרים</label>
-      <input
-        id={inputId}
-        type="password"
-        value={password}
-        autoComplete="off"
-        autoFocus
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button type="submit" className="btn danger" disabled={busy}>
-        אישור הסרה
+    <div className="code-form">
+      <span>להסיר את הבית?</span>
+      <button type="button" className="btn danger" onClick={confirm} disabled={busy}>
+        כן, הסירו
+      </button>
+      <button type="button" className="btn secondary" onClick={() => setConfirming(false)} disabled={busy}>
+        ביטול
       </button>
       {error && (
         <p className="error" role="alert">
           {error}
         </p>
       )}
-    </form>
+    </div>
   );
 }
 
@@ -69,17 +57,17 @@ export function HouseList({ houses, onRemove }: Props) {
   const listId = useId();
   const results = searchHouses(houses, query);
 
-  async function remove(id: string, password: string) {
+  async function remove(id: string) {
     const h = houses.find((x) => x.id === id);
-    await onRemove(id, password);
+    await onRemove(id);
     setRemovedMsg(`${h ? formatAddress(h) : 'הבית'} הוסר מהמפה.`);
     setQuery('');
   }
 
   return (
     <div className="card">
-      <h2>רשימת הבתים</h2>
-      <p className="hint">נגמרו הממתקים או שלא תרצו ביקורים? חפשו את הכתובת והסירו אותה מהמפה (נדרשת סיסמת מבוגרים).</p>
+      <h3>הסרת בית</h3>
+      <p className="hint">נגמרו הממתקים או שלא רוצים ביקורים? חפשו את הכתובת והסירו אותה מהמפה.</p>
 
       <label htmlFor="house-search" className="visually-hidden">
         חפשו כתובת
@@ -108,7 +96,7 @@ export function HouseList({ houses, onRemove }: Props) {
         {results.map((h) => (
           <li key={h.id} role="option" aria-selected={false}>
             <span className="result-address">{formatAddress(h)}</span>
-            <RemoveWithPassword house={h} onRemove={remove} />
+            <RemoveButton house={h} onRemove={remove} />
           </li>
         ))}
       </ul>
