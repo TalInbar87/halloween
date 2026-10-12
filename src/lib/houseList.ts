@@ -18,7 +18,25 @@ export interface HouseGroup {
   houses: House[];
 }
 
-const sameAddress = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+// Everything is in one city, so people write it (or not) in many ways.
+const CITY = /(קר(י)?ית[\s-]*אונו|kiryat[\s-]*ono)/gi;
+
+/**
+ * "street number" only, so the same building matches however it was typed:
+ * "נהר הירדן 27", "נהר הירדן 27 קרית אונו", "רחוב נהר הירדן 27, קריית אונו" → "נהר הירדן 27".
+ */
+export function addressKey(address: string): string {
+  return address
+    .split(',')[0]
+    .replace(CITY, ' ')
+    .replace(/["'״׳`]/g, '')
+    .replace(/^\s*(רחוב|רח)\s+/, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+const sameAddress = (a: string, b: string) => addressKey(a) === addressKey(b);
 
 /**
  * One tappable marker per building: apartments with the same address are grouped even if

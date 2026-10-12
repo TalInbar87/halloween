@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatAddress, groupByLocation, searchHouses } from './houseList';
+import { addressKey, formatAddress, groupByLocation, searchHouses } from './houseList';
 import type { House } from './types';
 
 const house = (id: string, over: Partial<House> = {}): House => ({
@@ -35,7 +35,34 @@ describe('formatAddress', () => {
   });
 });
 
+describe('addressKey', () => {
+  it.each([
+    ['נהר הירדן 27', 'נהר הירדן 27'],
+    ['נהר הירדן 27 קרית אונו', 'נהר הירדן 27'],
+    ['נהר הירדן 27, קריית אונו', 'נהר הירדן 27'],
+    ['  רחוב נהר  הירדן 27 ,קרית-אונו ', 'נהר הירדן 27'],
+    ["רח' נהר הירדן 27", 'נהר הירדן 27'],
+    ['צה"ל 30, קרית אונו', 'צהל 30'],
+    ['נהר הירדן 27, קרית אונו, ישראל', 'נהר הירדן 27'],
+  ])('%s → %s', (input, key) => {
+    expect(addressKey(input)).toBe(key);
+  });
+
+  it('keeps different house numbers apart', () => {
+    expect(addressKey('נהר הירדן 27')).not.toBe(addressKey('נהר הירדן 25'));
+  });
+});
+
 describe('groupByLocation', () => {
+  it('unites the same street and number written differently (real data)', () => {
+    const groups = groupByLocation([
+      house('a', { address: 'נהר הירדן 27 קרית אונו', apartment: '29', lat: 32.0505 }),
+      house('b', { address: 'נהר הירדן 27', apartment: '12', lat: 32.0512 }), // pins ~80m apart
+      house('c', { address: 'נהר הירדן 25 קריית אונו', lat: 32.0509 }),
+    ]);
+    expect(groups.map((g) => g.houses.map((h) => h.id))).toEqual([['a', 'b'], ['c']]);
+  });
+
   it('puts apartments in the same building into one group', () => {
     const groups = groupByLocation([
       house('a', { apartment: '1' }),
