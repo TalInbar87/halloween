@@ -37,6 +37,7 @@ describe('AddHouseForm', () => {
     expect(await screen.findByText('נא להזין כתובת')).toBeInTheDocument();
     expect(screen.getByText('נא לסמן את הבית על המפה')).toBeInTheDocument();
     expect(screen.getByText('נא לאשר הצגת הכתובת במפה')).toBeInTheDocument();
+    expect(screen.getByText('קוד של 4 ספרות')).toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
   });
 
@@ -112,12 +113,23 @@ describe('AddHouseForm', () => {
   it('submits a valid house and reports success', async () => {
     const { submit, onAdded, user } = setup();
     await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await user.type(screen.getByLabelText('דירה'), '4');
+    await user.type(screen.getByLabelText('קומה'), '2');
     await user.type(screen.getByLabelText(/הערות/), 'ממתקים בלי בוטנים');
+    await user.type(screen.getByLabelText(/קוד הסרה/), '1234');
     await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
     await user.click(screen.getByLabelText(/מסכימים/));
     await user.click(submitBtn());
     await waitFor(() =>
-      expect(submit).toHaveBeenCalledWith({ address: 'הירדן 12', notes: 'ממתקים בלי בוטנים', lat: 32.05, lng: 34.858 }),
+      expect(submit).toHaveBeenCalledWith({
+        address: 'הירדן 12',
+        apartment: '4',
+        floor: '2',
+        notes: 'ממתקים בלי בוטנים',
+        pin: '1234',
+        lat: 32.05,
+        lng: 34.858,
+      }),
     );
     expect(onAdded).toHaveBeenCalledWith({ id: 'h1', deleteToken: 't1' });
     expect(await screen.findByText(/הבית נוסף/)).toBeInTheDocument();
@@ -126,6 +138,7 @@ describe('AddHouseForm', () => {
   it('shows a friendly error when the server rejects', async () => {
     const { user } = setup({ submit: vi.fn().mockRejectedValue(new Error('rate_limited')) });
     await user.type(screen.getByLabelText('כתובת'), 'הירדן 12');
+    await user.type(screen.getByLabelText(/קוד הסרה/), '1234');
     await user.click(screen.getByRole('button', { name: 'stub-set-pin' }));
     await user.click(screen.getByLabelText(/מסכימים/));
     await user.click(submitBtn());

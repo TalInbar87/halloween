@@ -1,5 +1,5 @@
 import { useState, type ComponentType, type FormEvent } from 'react';
-import { validateHouseInput, ADDRESS_MAX, NOTES_MAX, type HouseFormErrors } from '../lib/validation';
+import { validateHouseInput, ADDRESS_MAX, NOTES_MAX, UNIT_MAX, type HouseFormErrors } from '../lib/validation';
 import { friendlyError } from '../lib/houses';
 import type { GeocodeResult } from '../lib/geocode';
 import type { LatLng, NewHouse } from '../lib/types';
@@ -21,7 +21,10 @@ interface Props {
 
 export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded, Picker = MapPicker }: Props) {
   const [address, setAddress] = useState('');
+  const [apartment, setApartment] = useState('');
+  const [floor, setFloor] = useState('');
   const [notes, setNotes] = useState('');
+  const [code, setCode] = useState('');
   const [pin, setPin] = useState<LatLng | null>(null);
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<HouseFormErrors>({});
@@ -84,7 +87,16 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setServerError(null);
-    const result = validateHouseInput({ address, notes, lat: pin?.lat ?? null, lng: pin?.lng ?? null, consent });
+    const result = validateHouseInput({
+      address,
+      apartment,
+      floor,
+      notes,
+      pin: code,
+      lat: pin?.lat ?? null,
+      lng: pin?.lng ?? null,
+      consent,
+    });
     if (!result.ok) {
       setErrors(result.errors);
       return;
@@ -106,14 +118,21 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
     return (
       <div className="card success">
         <h2>הבית נוסף למפה!</h2>
-        <p>הילדים כבר יכולים לראות אותו. אפשר להסיר אותו בכל רגע מהמכשיר הזה, בלשונית "הבתים שלי".</p>
+        <p>הילדים כבר יכולים לראות אותו.</p>
+        <p>
+          נגמרו הממתקים? בלשונית "רשימת הבתים" מחפשים את הכתובת ומסירים אותה. מהמכשיר הזה אפשר להסיר מיד, ומכל מכשיר
+          אחר עם קוד ההסרה שבחרתם.
+        </p>
         <button
           type="button"
           className="btn secondary"
           onClick={() => {
             setSuccess(false);
             setAddress('');
+            setApartment('');
+            setFloor('');
             setNotes('');
+            setCode('');
             setPin(null);
             setConsent(false);
             setSearchMsg(null);
@@ -151,12 +170,38 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       {errors.address && <p className="error">{errors.address}</p>}
       {searchMsg && <p className="hint">{searchMsg}</p>}
 
+      <div className="unit-row">
+        <div>
+          <label htmlFor="apartment">דירה</label>
+          <input
+            id="apartment"
+            value={apartment}
+            maxLength={UNIT_MAX}
+            inputMode="numeric"
+            placeholder="לא חובה"
+            onChange={(e) => setApartment(e.target.value)}
+          />
+        </div>
+        <div>
+          <label htmlFor="floor">קומה</label>
+          <input
+            id="floor"
+            value={floor}
+            maxLength={UNIT_MAX}
+            inputMode="numeric"
+            placeholder="לא חובה"
+            onChange={(e) => setFloor(e.target.value)}
+          />
+        </div>
+      </div>
+      {(errors.apartment || errors.floor) && <p className="error">{errors.apartment ?? errors.floor}</p>}
+
       <label htmlFor="notes">הערות לכתובת (לא חובה)</label>
       <input
         id="notes"
         value={notes}
         maxLength={NOTES_MAX}
-        placeholder="למשל: קומה 2, ממתקים בלי בוטנים, מחלקים עד 20:00"
+        placeholder="למשל: ממתקים בלי בוטנים, מחלקים עד 20:00"
         onChange={(e) => setNotes(e.target.value)}
       />
       {errors.notes && <p className="error">{errors.notes}</p>}
@@ -164,6 +209,23 @@ export function AddHouseForm({ submit, geocode, reverseGeocode, locate, onAdded,
       <p className="hint">לחצו על המפה או גררו את הסיכה כדי לסמן את הבית בדיוק.</p>
       <Picker value={pin} onChange={setPin} />
       {errors.location && <p className="error">{errors.location}</p>}
+
+      <label htmlFor="code">קוד הסרה (4 ספרות)</label>
+      <input
+        id="code"
+        className="code-input"
+        value={code}
+        maxLength={4}
+        inputMode="numeric"
+        autoComplete="off"
+        pattern="[0-9]*"
+        placeholder="••••"
+        onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+        aria-invalid={!!errors.pin}
+        aria-describedby="code-hint"
+      />
+      <p id="code-hint" className="hint">בחרו קוד ותזכרו אותו: בעזרתו תוכלו להסיר את הבית מהמפה מכל טלפון.</p>
+      {errors.pin && <p className="error">{errors.pin}</p>}
 
       <label className="check">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />

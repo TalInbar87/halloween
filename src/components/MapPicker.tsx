@@ -22,7 +22,7 @@ export function MapPicker({ value, onChange }: PickerProps) {
 
   return (
     <div className="picker">
-      <MapContainer center={[center.lat, center.lng]} zoom={value ? 18 : 16} className="picker-map">
+      <MapContainer center={[center.lat, center.lng]} zoom={value ? 18 : 16} className="picker-map" scrollWheelZoom={false}>
         <OsmTiles />
         <AutoResize />
         <ClickToPlace onChange={onChange} />

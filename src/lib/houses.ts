@@ -3,7 +3,7 @@ import type { House, NewHouse } from './types';
 
 // Anonymous visitors can only read these columns; writes go through SQL functions
 // that validate input and rate-limit (see supabase/migrations).
-const PUBLIC_COLUMNS = 'id,address,lat,lng,notes,created_at';
+const PUBLIC_COLUMNS = 'id,address,apartment,floor,lat,lng,notes,created_at';
 
 export async function fetchHouses(client: SupabaseClient): Promise<House[]> {
   const { data, error } = await client.from('houses').select(PUBLIC_COLUMNS).order('created_at');
@@ -14,9 +14,12 @@ export async function fetchHouses(client: SupabaseClient): Promise<House[]> {
 export async function addHouse(client: SupabaseClient, house: NewHouse): Promise<{ id: string; deleteToken: string }> {
   const { data, error } = await client.rpc('add_house', {
     p_address: house.address,
+    p_apartment: house.apartment,
+    p_floor: house.floor,
     p_notes: house.notes,
     p_lat: house.lat,
     p_lng: house.lng,
+    p_pin: house.pin,
   });
   if (error) throw new Error(error.message);
   const row = Array.isArray(data) ? data[0] : data;
@@ -26,6 +29,13 @@ export async function addHouse(client: SupabaseClient, house: NewHouse): Promise
 
 export async function removeHouse(client: SupabaseClient, id: string, token: string): Promise<boolean> {
   const { data, error } = await client.rpc('remove_house', { p_id: id, p_token: token });
+  if (error) throw new Error(error.message);
+  return data === true;
+}
+
+/** Remove from any device with the owner's 4-digit code. False = wrong code. */
+export async function removeHouseWithPin(client: SupabaseClient, id: string, pin: string): Promise<boolean> {
+  const { data, error } = await client.rpc('remove_house_with_pin', { p_id: id, p_pin: pin });
   if (error) throw new Error(error.message);
   return data === true;
 }

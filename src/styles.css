@@ -350,3 +350,120 @@ button:focus-visible {
   font-family: 'Rubik', system-ui, sans-serif;
   background: #1d1829;
 }
+
+/* Apartment / floor row */
+.unit-row {
+  display: flex;
+  gap: 12px;
+}
+
+.unit-row > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unit-row input {
+  width: 100%;
+}
+
+.code-input {
+  align-self: flex-start;
+  width: 8ch;
+  letter-spacing: 0.4em;
+  text-align: center;
+  direction: ltr;
+}
+
+/* Marker badge: apartments left in a building */
+.marker {
+  position: relative;
+}
+
+.marker-badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--purple);
+  color: #fff;
+  font: 700 11px/18px 'Rubik', system-ui, sans-serif;
+  text-align: center;
+}
+
+.popup-house {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popup-house + .popup-house {
+  border-top: 1px solid #ddd;
+  padding-top: 8px;
+}
+
+.popup-house.is-done strong {
+  color: #6b6b6b;
+}
+
+/* House list */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.search-input {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.results {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.results li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.results .btn {
+  align-self: flex-start;
+}
+
+.code-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-form .error {
+  flex-basis: 100%;
+}
+
+.success-msg {
+  color: var(--green);
+  margin: 12px 0 0;
+}
+
+.hint.small {
+  margin-top: 12px;
+  font-size: 0.8rem;
+}

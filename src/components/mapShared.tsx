@@ -38,7 +38,29 @@ export function AutoResize() {
 const emojiIcon = (emoji: string, className: string) =>
   L.divIcon({ html: emoji, className: `marker ${className}`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] });
 
-export const pumpkinIcon = emojiIcon('🎃', 'marker-todo');
-export const doneIcon = emojiIcon('✅', 'marker-done');
+const groupIcons = new Map<string, L.DivIcon>();
+
+/**
+ * Pumpkin until every apartment at this spot is visited, then a check mark.
+ * Buildings with several apartments show how many are left. Icons are cached so
+ * re-renders don't rebuild the marker (which would close an open popup).
+ */
+export function groupIcon(remaining: number, total: number): L.DivIcon {
+  const key = `${remaining}/${total}`;
+  let icon = groupIcons.get(key);
+  if (!icon) {
+    const done = remaining === 0;
+    const badge = total > 1 && !done ? `<span class="marker-badge">${remaining}</span>` : '';
+    icon = L.divIcon({
+      html: `${done ? '✅' : '🎃'}${badge}`,
+      className: `marker ${done ? 'marker-done' : 'marker-todo'}`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -16],
+    });
+    groupIcons.set(key, icon);
+  }
+  return icon;
+}
 export const pinIcon = emojiIcon('🏠', 'marker-pin');
 export const meIcon = L.divIcon({ html: '', className: 'me-dot', iconSize: [18, 18], iconAnchor: [9, 9] });

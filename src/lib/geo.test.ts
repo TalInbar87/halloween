@@ -5,6 +5,8 @@ import type { House } from './types';
 const house = (id: string, lat: number, lng: number): House => ({
   id,
   address: `addr ${id}`,
+  apartment: null,
+  floor: null,
   lat,
   lng,
   notes: null,

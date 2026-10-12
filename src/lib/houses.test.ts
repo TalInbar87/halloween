@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchHouses, addHouse, removeHouse, friendlyError } from './houses';
+import { fetchHouses, addHouse, removeHouse, removeHouseWithPin, friendlyError } from './houses';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 function clientWith(overrides: { select?: unknown; rpc?: unknown }) {
@@ -14,7 +14,7 @@ describe('fetchHouses', () => {
   it('selects only public columns', async () => {
     const { client, select } = clientWith({ select: { data: [], error: null } });
     await fetchHouses(client);
-    expect(select).toHaveBeenCalledWith('id,address,lat,lng,notes,created_at');
+    expect(select).toHaveBeenCalledWith('id,address,apartment,floor,lat,lng,notes,created_at');
   });
 
   it('returns rows', async () => {
@@ -30,16 +30,19 @@ describe('fetchHouses', () => {
 });
 
 describe('addHouse', () => {
-  const input = { address: 'הרצל 10', notes: null, lat: 31.96, lng: 34.8 };
+  const input = { address: 'הרצל 10', apartment: '4', floor: '2', notes: null, lat: 31.96, lng: 34.8, pin: '1234' };
 
   it('calls the add_house RPC and returns id + token', async () => {
     const { client, rpc } = clientWith({ rpc: { data: [{ id: 'h1', delete_token: 't1' }], error: null } });
     expect(await addHouse(client, input)).toEqual({ id: 'h1', deleteToken: 't1' });
     expect(rpc).toHaveBeenCalledWith('add_house', {
       p_address: 'הרצל 10',
+      p_apartment: '4',
+      p_floor: '2',
       p_notes: null,
       p_lat: 31.96,
       p_lng: 34.8,
+      p_pin: '1234',
     });
   });
 
@@ -64,6 +67,19 @@ describe('removeHouse', () => {
   it('throws on error', async () => {
     const { client } = clientWith({ rpc: { data: null, error: { message: 'x' } } });
     await expect(removeHouse(client, 'h1', 't1')).rejects.toThrow();
+  });
+});
+
+describe('removeHouseWithPin', () => {
+  it('calls remove_house_with_pin and returns the result', async () => {
+    const { client, rpc } = clientWith({ rpc: { data: false, error: null } });
+    expect(await removeHouseWithPin(client, 'h1', '9999')).toBe(false);
+    expect(rpc).toHaveBeenCalledWith('remove_house_with_pin', { p_id: 'h1', p_pin: '9999' });
+  });
+
+  it('throws on error', async () => {
+    const { client } = clientWith({ rpc: { data: null, error: { message: 'rate_limited' } } });
+    await expect(removeHouseWithPin(client, 'h1', '1234')).rejects.toThrow('rate_limited');
   });
 });
 

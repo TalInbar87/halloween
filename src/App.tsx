@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { KidMap } from './components/KidMap';
 import { AddHouseForm } from './components/AddHouseForm';
+import { HouseList } from './components/HouseList';
 import { supabase, supabaseConfigured } from './lib/supabase';
-import { addHouse, fetchHouses, friendlyError, removeHouse } from './lib/houses';
+import { addHouse, fetchHouses, removeHouse, removeHouseWithPin } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
 import {
@@ -15,7 +16,7 @@ import {
 } from './lib/progress';
 import type { House } from './lib/types';
 
-type Tab = 'map' | 'add' | 'mine';
+type Tab = 'map' | 'add' | 'list';
 
 const REFRESH_MS = 60_000;
 
@@ -62,18 +63,17 @@ export default function App() {
   const onToggle = useCallback((id: string) => setVisited((v) => toggleVisited(v, id)), []);
   const onAutoVisit = useCallback((id: string) => setVisited((v) => (v.has(id) ? v : new Set(v).add(id))), []);
 
-  const ownedHouses = houses.filter((h) => owned[h.id]);
+  async function handleRemoveOwned(id: string) {
+    await removeHouse(supabase, id, owned[id]);
+    forgetOwnedHouse(storage, id);
+    setOwned(loadOwnedHouses(storage));
+    refresh();
+  }
 
-  async function handleRemove(id: string) {
-    if (!confirm('להסיר את הבית מהמפה?')) return;
-    try {
-      await removeHouse(supabase, id, owned[id]);
-      forgetOwnedHouse(storage, id);
-      setOwned(loadOwnedHouses(storage));
-      refresh();
-    } catch (err) {
-      alert(friendlyError(err));
-    }
+  async function handleRemoveWithPin(id: string, pin: string) {
+    const removed = await removeHouseWithPin(supabase, id, pin);
+    if (removed) refresh();
+    return removed;
   }
 
   return (
@@ -87,11 +87,9 @@ export default function App() {
           <button role="tab" aria-selected={tab === 'add'} onClick={() => setTab('add')}>
             הוסיפו בית
           </button>
-          {ownedHouses.length > 0 && (
-            <button role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')}>
-              הבתים שלי
-            </button>
-          )}
+          <button role="tab" aria-selected={tab === 'list'} onClick={() => setTab('list')}>
+            רשימת הבתים
+          </button>
         </nav>
       </header>
 
@@ -113,20 +111,13 @@ export default function App() {
             }}
           />
         )}
-        {tab === 'mine' && (
-          <div className="card">
-            <h2>הבתים שהוספתם מהמכשיר הזה</h2>
-            <ul className="owned">
-              {ownedHouses.map((h) => (
-                <li key={h.id}>
-                  <span>{h.address}</span>
-                  <button type="button" className="btn danger" onClick={() => handleRemove(h.id)}>
-                    הסירו
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {tab === 'list' && (
+          <HouseList
+            houses={houses}
+            owned={owned}
+            onRemoveOwned={handleRemoveOwned}
+            onRemoveWithPin={handleRemoveWithPin}
+          />
         )}
       </main>
     </div>

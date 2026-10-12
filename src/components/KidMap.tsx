@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Circle, MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { House, LatLng } from '../lib/types';
 import { findAutoVisit, nearestUnvisited } from '../lib/geo';
+import { formatAddress, groupByLocation } from '../lib/houseList';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { ProgressBar } from './ProgressBar';
-import { AutoResize, OsmTiles, defaultCenter, doneIcon, meIcon, pumpkinIcon } from './mapShared';
+import { AutoResize, OsmTiles, defaultCenter, groupIcon, meIcon } from './mapShared';
 
 interface Props {
   houses: House[];
@@ -81,6 +82,7 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
 
   const next = me ? nearestUnvisited(me, houses, visited) : null;
   const visitedCount = houses.filter((h) => visited.has(h.id)).length;
+  const groups = useMemo(() => groupByLocation(houses), [houses]);
 
   return (
     <div className="kid">
@@ -95,7 +97,7 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
             {GEO_MESSAGES[geo.status] && <span className="hint">{GEO_MESSAGES[geo.status]}</span>}
             {next && (
               <span className="hint">
-                הבית הקרוב: {next.house.address} ({Math.round(next.meters)} מ׳)
+                הבית הקרוב: {formatAddress(next.house)} ({Math.round(next.meters)} מ׳)
               </span>
             )}
           </div>
@@ -107,17 +109,28 @@ export function KidMap({ houses, visited, onToggle, onAutoVisit }: Props) {
         <AutoResize />
         <FitHouses houses={houses} />
         <CenterOnMe position={me} />
-        {houses.map((h) => {
-          const done = visited.has(h.id);
+        {groups.map((g) => {
+          const remaining = g.houses.filter((h) => !visited.has(h.id)).length;
           return (
-            <Marker key={h.id} position={[h.lat, h.lng]} icon={done ? doneIcon : pumpkinIcon}>
+            <Marker key={g.key} position={[g.lat, g.lng]} icon={groupIcon(remaining, g.houses.length)}>
               <Popup>
                 <div className="popup">
-                  <strong>{h.address}</strong>
-                  {h.notes && <p>{h.notes}</p>}
-                  <button type="button" className={`btn ${done ? 'secondary' : 'primary'}`} onClick={() => onToggle(h.id)}>
-                    {done ? 'בטלו סימון' : 'היינו כאן!'}
-                  </button>
+                  {g.houses.map((h) => {
+                    const done = visited.has(h.id);
+                    return (
+                      <div key={h.id} className={`popup-house ${done ? 'is-done' : ''}`}>
+                        <strong>{formatAddress(h)}</strong>
+                        {h.notes && <p>{h.notes}</p>}
+                        <button
+                          type="button"
+                          className={`btn ${done ? 'secondary' : 'primary'}`}
+                          onClick={() => onToggle(h.id)}
+                        >
+                          {done ? 'בטלו סימון' : 'היינו כאן!'}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </Popup>
             </Marker>
