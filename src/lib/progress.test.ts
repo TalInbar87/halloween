@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadVisited, saveVisited, toggleVisited, loadView, saveView, applyToggle, applyAutoVisit } from './progress';
+import { loadVisited, saveVisited, toggleVisited, loadView, saveView } from './progress';
 
 function memoryStorage(): Storage {
   const data = new Map<string, string>();
@@ -84,32 +84,5 @@ describe('map/table view preference', () => {
   it('survives storage that throws', () => {
     expect(loadView(throwingStorage())).toBe('map');
     expect(() => saveView(throwingStorage(), 'table')).not.toThrow();
-  });
-});
-
-describe('manual unmark vs automatic check-off', () => {
-  const empty = { visited: new Set<string>(), dismissed: new Set<string>() };
-
-  it('auto-visits a house the kid is standing at', () => {
-    expect([...applyAutoVisit(empty, 'a').visited]).toEqual(['a']);
-  });
-
-  it('does not re-check a house the kid unmarked by hand', () => {
-    const marked = applyToggle(empty, 'a');
-    const unmarked = applyToggle(marked, 'a');
-    expect(unmarked.visited.has('a')).toBe(false);
-    expect(applyAutoVisit(unmarked, 'a').visited.has('a')).toBe(false);
-  });
-
-  it('marking by hand again clears the block', () => {
-    const unmarked = applyToggle(applyToggle(empty, 'a'), 'a');
-    const remarked = applyToggle(unmarked, 'a');
-    expect(remarked.visited.has('a')).toBe(true);
-    expect(remarked.dismissed.has('a')).toBe(false);
-  });
-
-  it('returns the same state when nothing changes', () => {
-    const s = applyAutoVisit(empty, 'a');
-    expect(applyAutoVisit(s, 'a')).toBe(s);
   });
 });

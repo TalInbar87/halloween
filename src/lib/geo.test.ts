@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { distanceMeters, findAutoVisit, isInServiceArea, nearestUnvisited } from './geo';
+import { distanceMeters, isInServiceArea, nearestUnvisited } from './geo';
 import type { House } from './types';
 
 const house = (id: string, lat: number, lng: number): House => ({
@@ -31,39 +31,6 @@ describe('distanceMeters', () => {
     const a = { lat: 32.1, lng: 34.8 };
     const b = { lat: 32.11, lng: 34.81 };
     expect(distanceMeters(a, b)).toBeCloseTo(distanceMeters(b, a), 6);
-  });
-});
-
-describe('findAutoVisit', () => {
-  const houses = [house('a', 32.0, 34.8), house('b', 32.001, 34.8)];
-
-  it('returns the closest unvisited house within the radius', () => {
-    const pos = { lat: 32.00005, lng: 34.8 }; // ~5.5m from a
-    expect(findAutoVisit(pos, 10, houses, new Set())).toBe('a');
-  });
-
-  it('ignores houses already visited', () => {
-    const pos = { lat: 32.00005, lng: 34.8 };
-    expect(findAutoVisit(pos, 10, houses, new Set(['a']))).toBeNull();
-  });
-
-  it('returns null when nothing is within the radius', () => {
-    const pos = { lat: 32.0005, lng: 34.8 }; // ~55m from both
-    expect(findAutoVisit(pos, 10, houses, new Set())).toBeNull();
-  });
-
-  it('returns null when GPS accuracy is too poor to trust', () => {
-    const pos = { lat: 32.00005, lng: 34.8 };
-    expect(findAutoVisit(pos, 80, houses, new Set())).toBeNull();
-  });
-
-  it('respects a custom radius', () => {
-    const pos = { lat: 32.0003, lng: 34.8 }; // ~33m from a
-    expect(findAutoVisit(pos, 10, houses, new Set(), 40)).toBe('a');
-  });
-
-  it('returns null for an empty house list', () => {
-    expect(findAutoVisit({ lat: 32, lng: 34.8 }, 5, [], new Set())).toBeNull();
   });
 });
 

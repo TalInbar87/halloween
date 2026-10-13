@@ -8,16 +8,7 @@ import { supabase, supabaseConfigured } from './lib/supabase';
 import { addHouse, fetchHouses, removeHouse, updateHouse, verifyPassword } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
-import {
-  applyAutoVisit,
-  applyToggle,
-  loadView,
-  loadVisited,
-  saveView,
-  saveVisited,
-  type View,
-  type VisitState,
-} from './lib/progress';
+import { loadView, loadVisited, saveView, saveVisited, toggleVisited, type View } from './lib/progress';
 import type { House, NewHouse } from './lib/types';
 
 const REFRESH_MS = 60_000;
@@ -38,8 +29,7 @@ export default function App() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [houses, setHouses] = useState<House[]>([]);
   const [loadError, setLoadError] = useState(false);
-  const [visits, setVisits] = useState<VisitState>(() => ({ visited: loadVisited(storage), dismissed: new Set() }));
-  const visited = visits.visited;
+  const [visited, setVisited] = useState(() => loadVisited(storage));
   const [editing, setEditing] = useState<House | null>(null);
   const [view, setView] = useState<View>(() => loadView(storage));
 
@@ -67,10 +57,8 @@ export default function App() {
 
   useEffect(() => saveVisited(storage, visited), [storage, visited]);
 
-  // A house the kid unmarks by hand is not checked off again automatically, even if
-  // they are still standing next to it.
-  const onToggle = useCallback((id: string) => setVisits((s) => applyToggle(s, id)), []);
-  const onAutoVisit = useCallback((id: string) => setVisits((s) => applyAutoVisit(s, id)), []);
+  // Houses are marked only when the kid taps "היינו כאן" — never automatically by GPS.
+  const onToggle = useCallback((id: string) => setVisited((v) => toggleVisited(v, id)), []);
 
   // Any call that finds the password no longer valid locks the panel again.
   async function asAdmin<T>(action: (password: string) => Promise<T>): Promise<T> {
@@ -160,7 +148,6 @@ export default function App() {
             houses={houses}
             visited={visited}
             onToggle={onToggle}
-            onAutoVisit={onAutoVisit}
             view={view}
             onViewChange={changeView}
           />

@@ -28,14 +28,11 @@ vi.mock('./lib/supabase', () => ({ supabase: {}, supabaseConfigured: true }));
 vi.mock('./lib/houses', async (orig) => ({ ...(await orig<typeof import('./lib/houses')>()), ...api }));
 // Leaflet needs a real browser; the map itself is covered elsewhere.
 vi.mock('./components/KidMap', () => ({
-  KidMap: (p: { visited: Set<string>; onToggle: (id: string) => void; onAutoVisit: (id: string) => void }) => (
-    <div data-testid="kid-map">
+  KidMap: (p: { visited: Set<string>; onToggle: (id: string) => void } & Record<string, unknown>) => (
+    <div data-testid="kid-map" data-props={Object.keys(p).sort().join(',')}>
       <span data-testid="visited">{[...p.visited].join(',')}</span>
       <button type="button" onClick={() => p.onToggle('h9')}>
         stub-toggle
-      </button>
-      <button type="button" onClick={() => p.onAutoVisit('h9')}>
-        stub-auto
       </button>
     </div>
   ),
@@ -156,13 +153,17 @@ describe('App', () => {
     );
   });
 
-  it('does not re-check a house the kid just unmarked while standing next to it', async () => {
+  it('marks and unmarks a house only by tapping', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
     expect(screen.getByTestId('visited')).toHaveTextContent('h9');
     await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
-    await user.click(screen.getByRole('button', { name: 'stub-auto' }));
     expect(screen.getByTestId('visited')).toHaveTextContent('');
+  });
+
+  it('gives the map no way to mark houses by itself (no automatic check-off)', () => {
+    render(<App />);
+    expect(screen.getByTestId('kid-map').dataset.props).not.toMatch(/auto/i);
   });
 });

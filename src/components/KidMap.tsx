@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Circle, MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { House, LatLng } from '../lib/types';
-import { findAutoVisit, nearestUnvisited } from '../lib/geo';
+import { nearestUnvisited } from '../lib/geo';
 import { formatAddress, groupByLocation } from '../lib/houseList';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { ProgressBar } from './ProgressBar';
@@ -14,7 +14,6 @@ interface Props {
   houses: House[];
   visited: ReadonlySet<string>;
   onToggle: (id: string) => void;
-  onAutoVisit: (id: string) => void;
   view: View;
   onViewChange: (view: View) => void;
 }
@@ -71,18 +70,12 @@ const GEO_MESSAGES: Record<string, string> = {
   unsupported: 'הדפדפן הזה לא תומך במיקום.',
 };
 
-export function KidMap({ houses, visited, onToggle, onAutoVisit, view, onViewChange }: Props) {
+export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props) {
   const [gpsOn, setGpsOn] = useState(false);
   const geo = useGeolocation(gpsOn);
   const me = geo.status === 'ok' ? geo.position : null;
   const center = defaultCenter();
 
-  // Auto check-off when standing at a house.
-  useEffect(() => {
-    if (geo.status !== 'ok') return;
-    const id = findAutoVisit(geo.position, geo.accuracy, houses, visited);
-    if (id) onAutoVisit(id);
-  }, [geo, houses, visited, onAutoVisit]);
 
   const next = me ? nearestUnvisited(me, houses, visited) : null;
   const visitedCount = houses.filter((h) => visited.has(h.id)).length;
