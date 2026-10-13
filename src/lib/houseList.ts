@@ -72,7 +72,16 @@ const normalize = (s: string) => s.toLowerCase().replace(/["'״׳`]/g, '');
 
 const MAX_RESULTS = 8;
 
-export function searchHouses(houses: House[], query: string): House[] {
+const collator = new Intl.Collator('he', { numeric: true });
+
+/** Street, then house number (9 before 10), then apartment. */
+export function sortByAddress(houses: House[]): House[] {
+  return [...houses].sort(
+    (a, b) => collator.compare(a.address, b.address) || collator.compare(a.apartment ?? '', b.apartment ?? ''),
+  );
+}
+
+export function searchHouses(houses: House[], query: string, limit = MAX_RESULTS): House[] {
   const words = normalize(query).split(/\s+/).filter(Boolean);
   if (words.length === 0) return [];
   return houses
@@ -80,5 +89,5 @@ export function searchHouses(houses: House[], query: string): House[] {
       const text = normalize(formatAddress(h));
       return words.every((w) => text.includes(w));
     })
-    .slice(0, MAX_RESULTS);
+    .slice(0, limit);
 }

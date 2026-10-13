@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addressKey, formatAddress, groupByLocation, searchHouses, splitAddress } from './houseList';
+import { addressKey, formatAddress, groupByLocation, searchHouses, sortByAddress, splitAddress } from './houseList';
 import type { House } from './types';
 
 const house = (id: string, over: Partial<House> = {}): House => ({
@@ -124,6 +124,25 @@ describe('groupByLocation', () => {
   });
 });
 
+describe('sortByAddress', () => {
+  it('sorts by street, then house number numerically, then apartment', () => {
+    const list = [
+      house('a', { address: 'נהר הירדן 27', apartment: '30' }),
+      house('b', { address: 'נהר הירדן 10' }),
+      house('c', { address: 'נהר הירדן 27', apartment: '12' }),
+      house('d', { address: 'אלון 3' }),
+      house('e', { address: 'נהר הירדן 9' }),
+    ];
+    expect(sortByAddress(list).map((h) => h.id)).toEqual(['d', 'e', 'b', 'c', 'a']);
+  });
+
+  it('does not mutate the input', () => {
+    const list = [house('a', { address: 'ב 1' }), house('b', { address: 'א 1' })];
+    sortByAddress(list);
+    expect(list.map((h) => h.id)).toEqual(['a', 'b']);
+  });
+});
+
 describe('searchHouses', () => {
   const list = [
     house('a', { address: 'הירדן 12, קרית אונו', apartment: '4' }),
@@ -153,8 +172,13 @@ describe('searchHouses', () => {
     expect(searchHouses(list, 'הירדן דירה 4').map((h) => h.id)).toEqual(['a']);
   });
 
-  it('caps the number of results', () => {
+  it('caps the number of results by default', () => {
     const many = Array.from({ length: 30 }, (_, i) => house(String(i)));
     expect(searchHouses(many, 'הירדן')).toHaveLength(8);
+  });
+
+  it('can return every match', () => {
+    const many = Array.from({ length: 30 }, (_, i) => house(String(i)));
+    expect(searchHouses(many, 'הירדן', Infinity)).toHaveLength(30);
   });
 });

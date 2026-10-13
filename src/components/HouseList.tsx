@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { formatAddress, searchHouses } from '../lib/houseList';
+import { formatAddress, searchHouses, sortByAddress } from '../lib/houseList';
 import { friendlyError } from '../lib/houses';
 import type { House } from '../lib/types';
 
@@ -56,7 +56,9 @@ export function HouseList({ houses, onRemove, onEdit }: Props) {
   const [query, setQuery] = useState('');
   const [removedMsg, setRemovedMsg] = useState<string | null>(null);
   const listId = useId();
-  const results = searchHouses(houses, query);
+  // Everything is listed; the search box only narrows it down.
+  const sorted = sortByAddress(houses);
+  const results = query.trim() ? searchHouses(sorted, query, Infinity) : sorted;
 
   async function remove(id: string) {
     const h = houses.find((x) => x.id === id);
@@ -76,12 +78,12 @@ export function HouseList({ houses, onRemove, onEdit }: Props) {
       <input
         id="house-search"
         role="combobox"
-        aria-expanded={results.length > 0}
+        aria-expanded={query.trim() !== ''}
         aria-controls={listId}
         aria-autocomplete="list"
         autoComplete="off"
         className="search-input"
-        placeholder="חפשו כתובת, למשל: הירדן 12"
+        placeholder="סננו לפי כתובת, למשל: הירדן 12"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);

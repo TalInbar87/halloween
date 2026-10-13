@@ -51,9 +51,11 @@ describe('HouseTable', () => {
     expect(screen.getByText('11 מ׳')).toBeInTheDocument();
   });
 
-  it('puts visited houses last and shows them checked', () => {
-    render(<HouseTable houses={houses} visited={new Set(['mid'])} position={null} onToggle={vi.fn()} />);
-    expect(rowsText()[2]).toContain('אלון');
+  it('keeps a visited house in place (no jump) and shows it checked', () => {
+    const { rerender } = render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
+    const before = rowsText();
+    rerender(<HouseTable houses={houses} visited={new Set(['mid'])} position={null} onToggle={vi.fn()} />);
+    expect(rowsText()).toEqual(before);
     expect(screen.getByRole('checkbox', { name: /אלון/ })).toBeChecked();
   });
 

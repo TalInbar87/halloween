@@ -39,7 +39,23 @@ async function removeVia(user: ReturnType<typeof userEvent.setup>, query: string
 }
 
 describe('HouseList', () => {
-  it('shows suggestions while typing', async () => {
+  it('shows every house before anything is typed, sorted by address', () => {
+    setup();
+    const items = screen.getAllByRole('option').map((o) => o.textContent);
+    expect(items).toHaveLength(2);
+    expect(items[0]).toContain('הירדן 12');
+    expect(items[1]).toContain('צה"ל 30');
+  });
+
+  it('shows every match, not just the first few', async () => {
+    const many = Array.from({ length: 12 }, (_, i) => house(`h${i}`, `נהר הירדן ${i + 1}`));
+    const { user } = setup({ houses: many });
+    expect(screen.getAllByRole('option')).toHaveLength(12);
+    await user.type(search(), 'נהר');
+    expect(screen.getAllByRole('option')).toHaveLength(12);
+  });
+
+  it('filters while typing', async () => {
     const { user } = setup();
     await user.type(search(), 'ירד');
     expect(screen.getByText('הירדן 12, קרית אונו · דירה 4, קומה 2')).toBeInTheDocument();

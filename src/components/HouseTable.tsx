@@ -15,11 +15,11 @@ export function HouseTable({ houses, visited, position, onToggle }: Props) {
 
   const rows = houses
     .map((h) => ({ house: h, label: formatAddress(h), meters: position ? distanceMeters(position, h) : null }))
+    // Order never depends on `visited`, so ticking a box doesn't move the row away
+    // from under the kid's finger.
     .sort((a, b) => {
-      const doneDiff = Number(visited.has(a.house.id)) - Number(visited.has(b.house.id));
-      if (doneDiff !== 0) return doneDiff;
       if (a.meters !== null && b.meters !== null) return a.meters - b.meters;
-      return a.label.localeCompare(b.label, 'he');
+      return a.label.localeCompare(b.label, 'he', { numeric: true });
     });
 
   return (
