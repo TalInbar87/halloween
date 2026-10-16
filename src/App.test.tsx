@@ -29,6 +29,7 @@ vi.mock('./lib/supabase', () => ({ supabase: {}, supabaseConfigured: true }));
 // Covered by their own tests; keep App tests focused and deterministic.
 vi.mock('./components/WelcomePopup', () => ({ WelcomePopup: () => null }));
 vi.mock('./components/Countdown', () => ({ Countdown: () => <div data-testid="countdown" /> }));
+vi.mock('./components/Celebration', () => ({ Celebration: () => null }));
 vi.mock('./lib/houses', async (orig) => ({ ...(await orig<typeof import('./lib/houses')>()), ...api }));
 // Leaflet needs a real browser; the map itself is covered elsewhere.
 vi.mock('./components/KidMap', () => ({
@@ -69,6 +70,7 @@ vi.mock('./components/AddHouseForm', () => ({
 }));
 
 import App from './App';
+import { JOKES } from './lib/jokes';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -176,5 +178,17 @@ describe('App', () => {
   it('gives the map no way to mark houses by itself (no automatic check-off)', () => {
     render(<App />);
     expect(screen.getByTestId('kid-map').dataset.props).not.toMatch(/auto/i);
+  });
+
+  it('pops a random joke when a house is marked, not when unmarked', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
+    const toast = screen.getByRole('status');
+    expect(JOKES.some((j) => toast.textContent?.includes(j))).toBe(true);
+    await user.click(toast); // tap away
+    await user.click(screen.getByRole('button', { name: 'stub-toggle' })); // unmark
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

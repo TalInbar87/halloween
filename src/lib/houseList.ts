@@ -91,3 +91,8 @@ export function searchHouses(houses: House[], query: string, limit = MAX_RESULTS
     })
     .slice(0, limit);
 }
+
+/** The round is finished when every house was visited or has no candy left. */
+export function isAllDone(houses: House[], visited: ReadonlySet<string>): boolean {
+  return houses.some((h) => visited.has(h.id)) && houses.every((h) => visited.has(h.id) || h.out_of_candy);
+}

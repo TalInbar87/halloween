@@ -8,10 +8,9 @@ interface Props {
   /** Kid's GPS position, if on: sorts by distance and shows meters. */
   position: LatLng | null;
   onToggle: (id: string) => void;
-  onNavigate: (id: string) => void;
 }
 
-export function HouseTable({ houses, visited, position, onToggle, onNavigate }: Props) {
+export function HouseTable({ houses, visited, position, onToggle }: Props) {
   if (houses.length === 0) return <p className="hint table-empty">עדיין אין בתים במפה</p>;
 
   const rows = houses
@@ -30,9 +29,6 @@ export function HouseTable({ houses, visited, position, onToggle, onNavigate }: 
           <tr>
             <th scope="col">כתובת</th>
             {position && <th scope="col">מרחק</th>}
-            <th scope="col">
-              <span className="visually-hidden">ניווט</span>
-            </th>
             <th scope="col">היינו כאן</th>
           </tr>
         </thead>
@@ -47,19 +43,6 @@ export function HouseTable({ houses, visited, position, onToggle, onNavigate }: 
                   {house.notes && <span className="row-notes">{house.notes}</span>}
                 </td>
                 {position && <td className="row-distance">{meters !== null && `${Math.round(meters)} מ׳`}</td>}
-                <td className="row-nav">
-                  {!house.out_of_candy && !done && (
-                    <button
-                      type="button"
-                      className="nav-btn"
-                      onClick={() => onNavigate(house.id)}
-                      aria-label={`נווטו אל ${label}`}
-                      title="נווטו לכאן"
-                    >
-                      🧭
-                    </button>
-                  )}
-                </td>
                 <td className="row-check">
                   <input
                     type="checkbox"

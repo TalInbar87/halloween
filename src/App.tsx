@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { KidMap } from './components/KidMap';
 import { AddHouseForm } from './components/AddHouseForm';
 import { HouseList } from './components/HouseList';
@@ -6,21 +6,13 @@ import { PasswordPrompt } from './components/PasswordPrompt';
 import { AdminPanel } from './components/AdminPanel';
 import { Countdown } from './components/Countdown';
 import { WelcomePopup } from './components/WelcomePopup';
+import { JokeToast } from './components/JokeToast';
+import { JOKES, pickJoke } from './lib/jokes';
 import { supabase, supabaseConfigured } from './lib/supabase';
 import { addHouse, fetchHouses, removeHouse, setOutOfCandy, updateHouse, verifyPassword } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
-import {
-  loadMapTheme,
-  loadView,
-  loadVisited,
-  saveMapTheme,
-  saveView,
-  saveVisited,
-  toggleVisited,
-  type MapTheme,
-  type View,
-} from './lib/progress';
+import { loadView, loadVisited, saveView, saveVisited, toggleVisited, type View } from './lib/progress';
 import type { House, NewHouse } from './lib/types';
 
 const REFRESH_MS = 60_000;
@@ -44,7 +36,6 @@ export default function App() {
   const [visited, setVisited] = useState(() => loadVisited(storage));
   const [editing, setEditing] = useState<House | null>(null);
   const [view, setView] = useState<View>(() => loadView(storage));
-  const [theme, setTheme] = useState<MapTheme>(() => loadMapTheme(storage));
 
   const refresh = useCallback(async () => {
     try {
@@ -71,7 +62,22 @@ export default function App() {
   useEffect(() => saveVisited(storage, visited), [storage, visited]);
 
   // Houses are marked only when the kid taps "היינו כאן" — never automatically by GPS.
-  const onToggle = useCallback((id: string) => setVisited((v) => toggleVisited(v, id)), []);
+  // Each "היינו כאן" pops a random candy joke (never the same one twice in a row).
+  const [joke, setJoke] = useState<number | null>(null);
+  const lastJoke = useRef<number | undefined>(undefined);
+  const visitedRef = useRef(visited);
+  visitedRef.current = visited;
+
+  const onToggle = useCallback((id: string) => {
+    const marking = !visitedRef.current.has(id);
+    setVisited((v) => toggleVisited(v, id));
+    if (marking) {
+      const i = pickJoke(Math.random, lastJoke.current);
+      lastJoke.current = i;
+      setJoke(i);
+    }
+  }, []);
+  const dismissJoke = useCallback(() => setJoke(null), []);
 
   // Any call that finds the password no longer valid locks the panel again.
   async function asAdmin<T>(action: (password: string) => Promise<T>): Promise<T> {
@@ -95,11 +101,6 @@ export default function App() {
   async function handleSetOutOfCandy(id: string, out: boolean) {
     await asAdmin((pw) => setOutOfCandy(supabase, id, out, pw));
     refresh();
-  }
-
-  function changeTheme(next: MapTheme) {
-    setTheme(next);
-    saveMapTheme(storage, next);
   }
 
   function changeView(next: View) {
@@ -183,13 +184,13 @@ export default function App() {
             onToggle={onToggle}
             view={view}
             onViewChange={changeView}
-            theme={theme}
-            onThemeChange={changeTheme}
           />
         )}
       </main>
 
       <WelcomePopup />
+
+      {joke !== null && <JokeToast joke={JOKES[joke]} onDone={dismissJoke} />}
 
       {adminOpen && !adminPassword && (
         <PasswordPrompt

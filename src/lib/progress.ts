@@ -3,7 +3,6 @@
 
 const VISITED_KEY = 'halloween.visited.v1';
 const VIEW_KEY = 'halloween.view.v1';
-const THEME_KEY = 'halloween.mapTheme.v1';
 
 function readJson(storage: Storage, key: string): unknown {
   try {
@@ -47,15 +46,4 @@ export function loadView(storage: Storage): View {
 
 export function saveView(storage: Storage, view: View): void {
   writeJson(storage, VIEW_KEY, view);
-}
-
-export type MapTheme = 'dark' | 'light';
-
-/** Dark Halloween map by default; the kid can switch to the regular light map. */
-export function loadMapTheme(storage: Storage): MapTheme {
-  return readJson(storage, THEME_KEY) === 'light' ? 'light' : 'dark';
-}
-
-export function saveMapTheme(storage: Storage, theme: MapTheme): void {
-  writeJson(storage, THEME_KEY, theme);
 }

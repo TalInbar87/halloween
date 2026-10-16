@@ -345,16 +345,6 @@ button:focus-visible {
   background: #f2efe9;
 }
 
-.leaflet-container.map-dark {
-  background: #1a1714;
-}
-
-/* Dark "Halloween night" map: invert the regular OSM tiles and turn the hues back,
-   so streets go dark, labels go light, and parks stay green-ish. Only the tiles —
-   pumpkins, the route line and the GPS dot keep their real colours. */
-.map-dark .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.7);
-}
 
 /* Close the sub-pixel seams iOS Safari draws between tiles when the map sits at a
    fractional offset: overlapping anti-aliased edges add up to full opacity. */
@@ -962,24 +952,6 @@ button:focus-visible {
   text-shadow: none;
 }
 
-/* Map controls row: view switch + dark/light map */
-.kid-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.theme-toggle {
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 50%;
-  background: var(--surface-2);
-  font-size: 1.15rem;
-  cursor: pointer;
-}
-
 /* Out of candy */
 .marker-out {
   filter: grayscale(1) brightness(0.8);
@@ -998,120 +970,6 @@ button:focus-visible {
 
 .house-table tr.is-out .row-address {
   color: var(--muted);
-}
-
-.popup-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* Navigation */
-.next-btn {
-  width: 100%;
-}
-
-.navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #2f2148, #221a33);
-  border: 1px solid rgb(255 122 26 / 0.45);
-}
-
-.navbar.arrived {
-  border-color: var(--green);
-}
-
-.navbar-info {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  min-width: 0;
-}
-
-.navbar-arrow {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--orange);
-  color: #1a0f00;
-  font-size: 1.2rem;
-  font-weight: 700;
-  transition: transform 0.4s ease;
-}
-
-.navbar-distance,
-.navbar-msg {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--orange);
-}
-
-.navbar.arrived .navbar-msg {
-  color: var(--green);
-}
-
-.navbar-target {
-  flex-basis: 100%;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.navbar-stop {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.target-ring {
-  border: 3px solid var(--orange);
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgb(255 122 26 / 0.25);
-  animation: pulse 1.4s ease-out infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(0.85);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.25);
-    opacity: 0.2;
-  }
-}
-
-.row-nav {
-  width: 1%;
-}
-
-.nav-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  background: var(--surface-2);
-  font-size: 1.1rem;
-  cursor: pointer;
 }
 
 /* Celebration */
@@ -1178,7 +1036,6 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .target-ring,
   .celebration-card,
   .celebration-trophy,
   .confetti-piece {
@@ -1186,5 +1043,46 @@ button:focus-visible {
   }
   .confetti {
     display: none;
+  }
+}
+
+/* Candy joke after "היינו כאן" */
+.joke-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 1500;
+  width: min(92vw, 420px);
+  padding: 14px 18px;
+  border-radius: 16px;
+  text-align: center;
+  font-size: 1.02rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text);
+  background: linear-gradient(180deg, #3a2858, #241a38);
+  border: 1px solid rgb(255 122 26 / 0.55);
+  box-shadow:
+    0 12px 32px rgb(0 0 0 / 0.5),
+    0 0 24px rgb(255 122 26 / 0.25);
+  transform: translateX(-50%);
+  cursor: pointer;
+  animation: joke-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes joke-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(24px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .joke-toast {
+    animation: none;
   }
 }

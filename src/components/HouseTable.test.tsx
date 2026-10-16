@@ -34,28 +34,28 @@ const rowsText = () =>
 
 describe('HouseTable', () => {
   it('lists every house with its full address and notes', () => {
-    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} onNavigate={vi.fn()} />);
+    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
     expect(screen.getAllByRole('row')).toHaveLength(4);
     expect(screen.getByText('הירדן 12, קרית אונו · דירה 4, קומה 2')).toBeInTheDocument();
     expect(screen.getByText('בלי בוטנים')).toBeInTheDocument();
   });
 
   it('sorts alphabetically without GPS', () => {
-    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} onNavigate={vi.fn()} />);
+    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
     expect(rowsText()[0]).toContain('אלון');
   });
 
   it('sorts by distance and shows meters when GPS is on', () => {
-    render(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} onNavigate={vi.fn()} />);
+    render(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} />);
     expect(rowsText()[0]).toContain('הירדן');
     expect(rowsText()[2]).toContain('צה"ל');
     expect(screen.getByText('11 מ׳')).toBeInTheDocument();
   });
 
   it('keeps a visited house in place (no jump) and shows it checked', () => {
-    const { rerender } = render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} onNavigate={vi.fn()} />);
+    const { rerender } = render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
     const before = rowsText();
-    rerender(<HouseTable houses={houses} visited={new Set(['mid'])} position={null} onToggle={vi.fn()} onNavigate={vi.fn()} />);
+    rerender(<HouseTable houses={houses} visited={new Set(['mid'])} position={null} onToggle={vi.fn()} />);
     expect(rowsText()).toEqual(before);
     expect(screen.getByRole('checkbox', { name: /אלון/ })).toBeChecked();
   });
@@ -67,33 +67,21 @@ describe('HouseTable', () => {
         visited={new Set()}
         position={null}
         onToggle={vi.fn()}
-        onNavigate={vi.fn()}
+       
       />,
     );
     expect(screen.getByText('נגמרו הממתקים 😢')).toBeInTheDocument();
   });
 
-  it('navigates to a house from its row', async () => {
-    const onNavigate = vi.fn();
-    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} onNavigate={onNavigate} />);
-    await userEvent.setup().click(screen.getByRole('button', { name: /נווטו אל הירדן/ }));
-    expect(onNavigate).toHaveBeenCalledWith('near');
-  });
-
-  it('has no navigate button for a house already visited', () => {
-    render(<HouseTable houses={houses} visited={new Set(['near'])} position={null} onToggle={vi.fn()} onNavigate={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: /נווטו אל הירדן/ })).not.toBeInTheDocument();
-  });
-
   it('toggles a house', async () => {
     const onToggle = vi.fn();
-    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={onToggle} onNavigate={vi.fn()} />);
+    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={onToggle} />);
     await userEvent.setup().click(screen.getByRole('checkbox', { name: /הירדן/ }));
     expect(onToggle).toHaveBeenCalledWith('near');
   });
 
   it('shows an empty state', () => {
-    render(<HouseTable houses={[]} visited={new Set()} position={null} onToggle={vi.fn()} onNavigate={vi.fn()} />);
+    render(<HouseTable houses={[]} visited={new Set()} position={null} onToggle={vi.fn()} />);
     expect(screen.getByText(/עדיין אין בתים/)).toBeInTheDocument();
   });
 });

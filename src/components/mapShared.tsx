@@ -15,7 +15,7 @@ export function defaultCenter(): LatLng {
 
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
-/** OpenStreetMap tiles. The dark "Halloween night" look is a CSS filter (see .map-dark in styles.css). */
+/** OpenStreetMap tiles. */
 export function OsmTiles() {
   return <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} attribution={OSM_ATTRIBUTION} />;
 }
@@ -68,8 +68,6 @@ export function groupIcon({ remaining, total, available }: GroupState): L.DivIco
   }
   return icon;
 }
-
-export const targetIcon = L.divIcon({ html: '', className: 'target-ring', iconSize: [52, 52], iconAnchor: [26, 26] });
 
 export const pinIcon = emojiIcon('🏠', 'marker-pin');
 export const meIcon = L.divIcon({ html: '', className: 'me-dot', iconSize: [18, 18], iconAnchor: [9, 9] });
