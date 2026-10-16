@@ -4,6 +4,8 @@ import { AddHouseForm } from './components/AddHouseForm';
 import { HouseList } from './components/HouseList';
 import { PasswordPrompt } from './components/PasswordPrompt';
 import { AdminPanel } from './components/AdminPanel';
+import { Countdown } from './components/Countdown';
+import { WelcomePopup } from './components/WelcomePopup';
 import { supabase, supabaseConfigured } from './lib/supabase';
 import { addHouse, fetchHouses, removeHouse, updateHouse, verifyPassword } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
@@ -87,17 +89,22 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>מפת הממתקים של השכונה</h1>
-        {!adminOpen && (
-          <button type="button" className="gear" aria-label="ניהול" title="ניהול (למבוגרים)" onClick={() => setAdminOpen(true)}>
-            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.48.48 0 0 0 .12-.61l-1.92-3.32a.48.48 0 0 0-.59-.21l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54a7.03 7.03 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.21L2.71 8.87a.48.48 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.63.06.94l-2.03 1.58a.48.48 0 0 0-.12.61l1.92 3.32c.12.21.37.3.59.21l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.09.47 0 .59-.21l1.92-3.32a.48.48 0 0 0-.12-.61l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"
-              />
-            </svg>
-          </button>
-        )}
+        <div className="header-top">
+          <h1>
+            מפת השכונה הכי טובה <span dir="ltr">EVER!</span>
+          </h1>
+          {!adminOpen && (
+            <button type="button" className="gear" aria-label="ניהול" title="ניהול (למבוגרים)" onClick={() => setAdminOpen(true)}>
+              <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.48.48 0 0 0 .12-.61l-1.92-3.32a.48.48 0 0 0-.59-.21l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54a7.03 7.03 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.21L2.71 8.87a.48.48 0 0 0 .12.61l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.63.06.94l-2.03 1.58a.48.48 0 0 0-.12.61l1.92 3.32c.12.21.37.3.59.21l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.22.09.47 0 .59-.21l1.92-3.32a.48.48 0 0 0-.12-.61l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+        {!adminOpen && <Countdown />}
       </header>
 
       {!supabaseConfigured && <p className="error banner">חסרות הגדרות Supabase (VITE_SUPABASE_URL).</p>}
@@ -153,6 +160,8 @@ export default function App() {
           />
         )}
       </main>
+
+      <WelcomePopup />
 
       {adminOpen && !adminPassword && (
         <PasswordPrompt

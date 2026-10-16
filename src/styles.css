@@ -38,20 +38,27 @@ body {
 }
 
 .header {
+  padding: 8px 16px 12px;
+  background:
+    radial-gradient(120% 140% at 50% -40%, rgb(255 122 26 / 0.22), transparent 60%),
+    var(--surface);
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 56px;
-  padding: 8px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--surface-2);
+  min-height: 44px;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--orange);
+  text-shadow: 0 0 18px rgb(255 122 26 / 0.45);
 }
 
 .gear {
@@ -668,4 +675,245 @@ button:focus-visible {
 .city strong {
   color: var(--text);
   font-weight: 500;
+}
+
+/* Countdown under the title */
+.countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.countdown-title,
+.countdown-date {
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.countdown-units {
+  display: flex;
+  gap: 8px;
+  direction: rtl;
+}
+
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 58px;
+  padding: 6px 4px 4px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2f2148, #1b1428);
+  border: 1px solid rgb(255 122 26 / 0.35);
+  box-shadow: 0 0 12px rgb(255 122 26 / 0.15) inset;
+}
+
+.countdown-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--orange);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.countdown.started {
+  padding: 6px 0 2px;
+}
+
+.countdown-started {
+  font-weight: 700;
+  color: var(--orange);
+  animation: glow 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 4px rgb(255 122 26 / 0.3);
+  }
+  to {
+    text-shadow: 0 0 16px rgb(255 122 26 / 0.9);
+  }
+}
+
+/* Welcome popup */
+.welcome-overlay {
+  background: rgb(8 4 16 / 0.75);
+  backdrop-filter: blur(3px);
+}
+
+.welcome {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 0 20px 20px;
+  border-radius: 18px;
+  text-align: center;
+  background: linear-gradient(180deg, #2a1d44 0%, #1a1329 55%, #140f1f 100%);
+  border: 1px solid rgb(255 122 26 / 0.4);
+  box-shadow:
+    0 0 0 1px rgb(124 77 255 / 0.25),
+    0 20px 60px rgb(0 0 0 / 0.6),
+    0 0 40px rgb(255 122 26 / 0.18);
+  animation: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.welcome-sky {
+  position: relative;
+  height: 120px;
+  margin: 0 -20px 4px;
+  overflow: hidden;
+  border-radius: 18px 18px 0 0;
+  background: radial-gradient(80% 90% at 50% 0%, #3b2a63, transparent 70%);
+}
+
+.welcome-moon {
+  position: absolute;
+  top: 14px;
+  inset-inline-start: 26px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff4cf;
+  box-shadow: 0 0 24px 6px rgb(255 244 207 / 0.45);
+}
+
+.welcome-pumpkin {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  font-size: 64px;
+  line-height: 1;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 14px rgb(255 122 26 / 0.7));
+  animation: bob 2.4s ease-in-out infinite;
+}
+
+.bat {
+  position: absolute;
+  font-size: 20px;
+  animation: fly 6s linear infinite;
+}
+
+.bat-1 {
+  top: 18px;
+  animation-delay: 0s;
+}
+
+.bat-2 {
+  top: 44px;
+  font-size: 15px;
+  animation-delay: -2s;
+  animation-duration: 7.5s;
+}
+
+.bat-3 {
+  top: 30px;
+  font-size: 17px;
+  animation-delay: -4.2s;
+  animation-duration: 5.2s;
+}
+
+.welcome h2 {
+  margin: 8px 0 6px;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  color: var(--orange);
+  text-shadow: 0 0 14px rgb(255 122 26 / 0.4);
+}
+
+.welcome-when {
+  margin: 0 0 14px;
+  color: var(--text);
+}
+
+.welcome-when strong {
+  color: var(--orange);
+}
+
+.welcome-steps {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: start;
+}
+
+.welcome-steps li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.04);
+  font-size: 0.95rem;
+}
+
+.welcome-steps li span {
+  font-size: 1.2rem;
+}
+
+.welcome-go {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.05rem;
+  box-shadow: 0 6px 20px rgb(255 122 26 / 0.35);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-6px) rotate(4deg);
+  }
+}
+
+@keyframes fly {
+  from {
+    left: -30px;
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  to {
+    left: calc(100% + 30px);
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome,
+  .welcome-pumpkin,
+  .bat,
+  .countdown-started {
+    animation: none;
+  }
+  .bat {
+    display: none;
+  }
 }

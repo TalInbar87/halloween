@@ -25,6 +25,9 @@ const fixtureHouse = {
 };
 
 vi.mock('./lib/supabase', () => ({ supabase: {}, supabaseConfigured: true }));
+// Covered by their own tests; keep App tests focused and deterministic.
+vi.mock('./components/WelcomePopup', () => ({ WelcomePopup: () => null }));
+vi.mock('./components/Countdown', () => ({ Countdown: () => <div data-testid="countdown" /> }));
 vi.mock('./lib/houses', async (orig) => ({ ...(await orig<typeof import('./lib/houses')>()), ...api }));
 // Leaflet needs a real browser; the map itself is covered elsewhere.
 vi.mock('./components/KidMap', () => ({
@@ -82,6 +85,13 @@ async function unlock(user: ReturnType<typeof userEvent.setup>, password = 'secr
 }
 
 describe('App', () => {
+  it('shows the new title with the countdown under it', () => {
+    render(<App />);
+    const title = screen.getByRole('heading', { level: 1 });
+    expect(title).toHaveTextContent('מפת השכונה הכי טובה EVER!');
+    expect(title.compareDocumentPosition(screen.getByTestId('countdown')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('shows one main screen: the kid view and a gear, no tabs', () => {
     render(<App />);
     expect(screen.getByTestId('kid-map')).toBeInTheDocument();
