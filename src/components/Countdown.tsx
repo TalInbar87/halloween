@@ -37,6 +37,7 @@ export function Countdown({ target = HALLOWEEN_START }: Props) {
       <span className="countdown-title">ההאלווין מתחיל בעוד</span>
       <div
         className="countdown-units"
+        dir="ltr"
         role="timer"
         aria-label={`ההאלווין מתחיל בעוד ${t.days} ימים, ${t.hours} שעות ו-${t.minutes} דקות`}
       >

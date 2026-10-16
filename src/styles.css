@@ -696,7 +696,6 @@ button:focus-visible {
 .countdown-units {
   display: flex;
   gap: 8px;
-  direction: rtl;
 }
 
 .countdown-unit {

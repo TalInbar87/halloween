@@ -18,6 +18,14 @@ describe('Countdown', () => {
     expect(screen.getByText(/31\.10 · 17:00/)).toBeInTheDocument();
   });
 
+  it('reads left to right like a clock: days, hours, minutes, seconds', () => {
+    vi.useFakeTimers({ now: new Date('2026-10-16T12:30:15Z') });
+    render(<Countdown target={target} />);
+    const timer = screen.getByRole('timer');
+    expect(timer).toHaveAttribute('dir', 'ltr');
+    expect([...timer.children].map((c) => c.lastChild?.textContent)).toEqual(['ימים', 'שעות', 'דקות', 'שניות']);
+  });
+
   it('ticks every second', () => {
     vi.useFakeTimers({ now: new Date('2026-10-16T12:30:15Z') });
     render(<Countdown target={target} />);
