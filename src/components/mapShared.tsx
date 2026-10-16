@@ -15,19 +15,9 @@ export function defaultCenter(): LatLng {
 
 const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
-/** Regular OpenStreetMap tiles, or the dark CARTO "Halloween night" map. */
-export function OsmTiles({ theme = 'light' }: { theme?: 'light' | 'dark' }) {
-  return theme === 'dark' ? (
-    <TileLayer
-      key="dark"
-      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      subdomains="abcd"
-      maxZoom={20}
-      attribution={`${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`}
-    />
-  ) : (
-    <TileLayer key="light" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} attribution={OSM_ATTRIBUTION} />
-  );
+/** OpenStreetMap tiles. The dark "Halloween night" look is a CSS filter (see .map-dark in styles.css). */
+export function OsmTiles() {
+  return <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} attribution={OSM_ATTRIBUTION} />;
 }
 
 /** Leaflet caches its container size; re-measure whenever the container resizes (tabs, rotation). */

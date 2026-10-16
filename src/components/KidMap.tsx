@@ -179,7 +179,7 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange, theme, o
         <HouseTable houses={houses} visited={visited} position={me} onToggle={onToggle} onNavigate={navigateTo} />
       ) : (
         <MapContainer center={[center.lat, center.lng]} zoom={16} className={`kid-map map-${theme}`}>
-          <OsmTiles theme={theme} />
+          <OsmTiles />
           <AutoResize />
           <FitHouses houses={houses} />
           <CenterOnMe position={me} />

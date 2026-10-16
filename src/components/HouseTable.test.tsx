@@ -80,6 +80,11 @@ describe('HouseTable', () => {
     expect(onNavigate).toHaveBeenCalledWith('near');
   });
 
+  it('has no navigate button for a house already visited', () => {
+    render(<HouseTable houses={houses} visited={new Set(['near'])} position={null} onToggle={vi.fn()} onNavigate={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /נווטו אל הירדן/ })).not.toBeInTheDocument();
+  });
+
   it('toggles a house', async () => {
     const onToggle = vi.fn();
     render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={onToggle} onNavigate={vi.fn()} />);

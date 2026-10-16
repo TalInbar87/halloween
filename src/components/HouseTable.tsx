@@ -48,7 +48,7 @@ export function HouseTable({ houses, visited, position, onToggle, onNavigate }: 
                 </td>
                 {position && <td className="row-distance">{meters !== null && `${Math.round(meters)} מ׳`}</td>}
                 <td className="row-nav">
-                  {!house.out_of_candy && (
+                  {!house.out_of_candy && !done && (
                     <button
                       type="button"
                       className="nav-btn"
