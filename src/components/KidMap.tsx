@@ -8,6 +8,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { ProgressBar } from './ProgressBar';
 import { HouseTable } from './HouseTable';
 import { Celebration } from './Celebration';
+import { KeepScroll } from './KeepScroll';
 import type { View } from '../lib/progress';
 import { AutoResize, OsmTiles, defaultCenter, groupIcon, markerZOffset, meIcon } from './mapShared';
 
@@ -136,6 +137,7 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
               >
                 {/* Big buildings (e.g. 7 apartments) scroll inside the popup instead of overflowing the screen. */}
                 <Popup maxHeight={280}>
+                  <KeepScroll watch={g.houses.map((h) => (visited.has(h.id) ? 1 : 0)).join('')}>
                   <div className="popup">
                     {g.houses.length > 1 && remaining === 0 && <p className="building-done">לא השארתם ממתק אחד בבניין 😋🍬</p>}
                     {g.houses.map((h) => {
@@ -156,6 +158,7 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
                       );
                     })}
                   </div>
+                  </KeepScroll>
                 </Popup>
               </Marker>
             );
