@@ -38,7 +38,9 @@ describe('Countdown', () => {
     render(<Countdown target={target} />);
     act(() => vi.advanceTimersByTime(1000));
     expect(screen.queryByRole('timer')).not.toBeInTheDocument();
-    expect(screen.getByText(/ההאלווין התחיל/)).toBeInTheDocument();
+    expect(screen.getByText('ההאלווין התחיל! צאו לאסוף ממתקים 🎃')).toBeInTheDocument();
+    const note = screen.getByText('(ואל תשכחו לצחצח שיניים טוב טוב לפני השינה 🪥🦷)');
+    expect(note).toHaveClass('started-note');
   });
 
   it('has an accessible summary for screen readers', () => {

@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
 import { HALLOWEEN_START, timeLeft } from '../lib/countdown';
+import { currentTime } from '../lib/clock';
+
+/** Shown from 17:00 on the 31st, both under the title and in the welcome popup. */
+export function StartedMessage({ className }: { className: string }) {
+  return (
+    <p className={className}>
+      <span className="started-main">ההאלווין התחיל! צאו לאסוף ממתקים 🎃</span>
+      <span className="started-note">(ואל תשכחו לצחצח שיניים טוב טוב לפני השינה 🪥🦷)</span>
+    </p>
+  );
+}
 
 interface Props {
   target?: Date;
@@ -8,10 +19,10 @@ interface Props {
 const pad = (n: number) => String(n).padStart(2, '0');
 
 export function Countdown({ target = HALLOWEEN_START }: Props) {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState(currentTime);
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
+    const id = setInterval(() => setNow(currentTime()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -20,7 +31,7 @@ export function Countdown({ target = HALLOWEEN_START }: Props) {
   if (t.done) {
     return (
       <div className="countdown started">
-        <span className="countdown-started">ההאלווין התחיל! צאו לאסוף ממתקים 🎃</span>
+        <StartedMessage className="countdown-started" />
       </div>
     );
   }

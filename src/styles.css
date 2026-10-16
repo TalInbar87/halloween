@@ -728,6 +728,10 @@ button:focus-visible {
 }
 
 .countdown-started {
+  margin: 0;
+  max-width: 34ch;
+  text-align: center;
+  line-height: 1.4;
   font-weight: 700;
   color: var(--orange);
   animation: glow 1.6s ease-in-out infinite alternate;
@@ -835,6 +839,13 @@ button:focus-visible {
   color: var(--text);
 }
 
+.welcome-started {
+  font-weight: 700;
+  color: var(--orange);
+  line-height: 1.4;
+  animation: glow 1.6s ease-in-out infinite alternate;
+}
+
 .welcome-when strong {
   color: var(--orange);
 }
@@ -909,10 +920,25 @@ button:focus-visible {
   .welcome,
   .welcome-pumpkin,
   .bat,
-  .countdown-started {
+  .countdown-started,
+  .welcome-started {
     animation: none;
   }
   .bat {
     display: none;
   }
+}
+
+/* "Halloween started" message: main line + smaller reminder below */
+.started-main,
+.started-note {
+  display: block;
+}
+
+.started-note {
+  margin-top: 2px;
+  font-size: 0.78em;
+  font-weight: 500;
+  color: var(--muted);
+  text-shadow: none;
 }

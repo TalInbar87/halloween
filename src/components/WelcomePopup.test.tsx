@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { vi, afterEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { WelcomePopup } from './WelcomePopup';
 
@@ -15,8 +16,29 @@ function fakeDoc(cookie = '') {
   };
 }
 
+afterEach(() => vi.useRealTimers());
+
+const STARTED = 'ההאלווין התחיל! צאו לאסוף ממתקים 🎃';
+const NOTE = '(ואל תשכחו לצחצח שיניים טוב טוב לפני השינה 🪥🦷)';
+
 describe('WelcomePopup', () => {
+  it('shows the date before Halloween starts', () => {
+    vi.useFakeTimers({ now: new Date('2026-10-20T10:00:00Z'), toFake: ['Date'] });
+    render(<WelcomePopup doc={fakeDoc()} />);
+    expect(screen.getByText(/31 באוקטובר/)).toBeInTheDocument();
+    expect(screen.queryByText(STARTED)).not.toBeInTheDocument();
+  });
+
+  it('says Halloween has started once it is 17:00 on the 31st', () => {
+    vi.useFakeTimers({ now: new Date('2026-10-31T15:00:00Z'), toFake: ['Date'] });
+    render(<WelcomePopup doc={fakeDoc()} />);
+    expect(screen.getByText(STARTED)).toBeInTheDocument();
+    expect(screen.getByText(NOTE)).toHaveClass('started-note');
+    expect(screen.queryByText(/31 באוקטובר/)).not.toBeInTheDocument();
+  });
+
   it('pops up on the first visit of the day', () => {
+    vi.useFakeTimers({ now: new Date('2026-10-20T10:00:00Z'), toFake: ['Date'] });
     render(<WelcomePopup doc={fakeDoc()} />);
     expect(screen.getByRole('dialog', { name: /ברוכים הבאים/ })).toBeInTheDocument();
     expect(screen.getByText(/31 באוקטובר/)).toBeInTheDocument();

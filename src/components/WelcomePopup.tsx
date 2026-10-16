@@ -1,5 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { markWelcomeSeen, shouldShowWelcome } from '../lib/welcome';
+import { HALLOWEEN_START } from '../lib/countdown';
+import { currentTime } from '../lib/clock';
+import { StartedMessage } from './Countdown';
 
 interface Props {
   /** Injected for tests; defaults to the real document. */
@@ -26,6 +29,8 @@ export function WelcomePopup({ doc = document }: Props) {
 
   if (!open) return null;
 
+  const started = currentTime() >= HALLOWEEN_START;
+
   return (
     <div className="overlay welcome-overlay" onClick={close}>
       <div
@@ -46,9 +51,13 @@ export function WelcomePopup({ doc = document }: Props) {
         <h2 id={titleId}>
           ברוכים הבאים למפת השכונה הכי טובה <span dir="ltr">EVER!</span>
         </h2>
-        <p className="welcome-when">
-          שבת, 31 באוקטובר · <strong>17:00</strong> · יוצאים לאסוף ממתקים
-        </p>
+        {started ? (
+          <StartedMessage className="welcome-when welcome-started" />
+        ) : (
+          <p className="welcome-when">
+            שבת, 31 באוקטובר · <strong>17:00</strong> · יוצאים לאסוף ממתקים
+          </p>
+        )}
 
         <ul className="welcome-steps">
           <li>
