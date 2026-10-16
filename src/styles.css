@@ -340,7 +340,15 @@ button:focus-visible {
 /* Leaflet attribution readable on dark */
 .leaflet-container {
   font-family: 'Rubik', system-ui, sans-serif;
-  background: #1d1829;
+  /* OSM land colour: if Safari leaves a hairline between tile rows, it's invisible
+     instead of a dark line showing through. */
+  background: #f2efe9;
+}
+
+/* Close the sub-pixel seams iOS Safari draws between tiles when the map sits at a
+   fractional offset: overlapping anti-aliased edges add up to full opacity. */
+.leaflet-tile-container img.leaflet-tile {
+  mix-blend-mode: plus-lighter;
 }
 
 /* Apartment / floor row */
