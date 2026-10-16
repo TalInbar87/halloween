@@ -186,9 +186,40 @@ describe('App', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
     const toast = screen.getByRole('status');
-    expect(JOKES.some((j) => toast.textContent?.includes(j))).toBe(true);
-    await user.click(toast); // tap away
+    expect(JOKES.some((j) => toast.textContent?.includes(j.text))).toBe(true);
+    await user.click(document.querySelector('.joke-stage')!); // tap away
     await user.click(screen.getByRole('button', { name: 'stub-toggle' })); // unmark
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('shows six different jokes for six marks (and remembers the round across a refresh)', async () => {
+    api.fetchHouses.mockResolvedValue([]);
+    const user = userEvent.setup();
+    const seen: string[] = [];
+    const { unmount } = render(<App />);
+    for (let i = 0; i < 3; i++) {
+      await user.click(screen.getByRole('button', { name: 'stub-toggle' })); // mark
+      seen.push(screen.getByRole('status').textContent ?? '');
+      await user.click(screen.getByRole('button', { name: 'stub-toggle' })); // unmark
+    }
+    unmount();
+    render(<App />); // page refresh
+    for (let i = 0; i < 3; i++) {
+      await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
+      seen.push(screen.getByRole('status').textContent ?? '');
+      await user.click(screen.getByRole('button', { name: 'stub-toggle' }));
+    }
+    expect(new Set(seen).size).toBe(6);
+  });
+
+  it('adds a "whole building done" note when the last apartment of an address is marked', async () => {
+    api.fetchHouses.mockResolvedValue([fixtureHouse, { ...fixtureHouse, id: 'h10', apartment: '21' }]);
+    localStorage.setItem('halloween.visited.v1', JSON.stringify(['h10']));
+    const user = userEvent.setup();
+    render(<App />);
+    await screen.findByTestId('kid-map');
+    await waitFor(() => expect(api.fetchHouses).toHaveBeenCalled());
+    await user.click(screen.getByRole('button', { name: 'stub-toggle' })); // marks h9, the last one
+    expect(screen.getByRole('status')).toHaveTextContent('סיימתם את כל הבניין בנהר הירדן 23');
   });
 });

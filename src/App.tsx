@@ -7,12 +7,13 @@ import { AdminPanel } from './components/AdminPanel';
 import { Countdown } from './components/Countdown';
 import { WelcomePopup } from './components/WelcomePopup';
 import { JokeToast } from './components/JokeToast';
-import { JOKES, pickJoke } from './lib/jokes';
+import { JOKES, loadJokeBag, nextJoke, saveJokeBag } from './lib/jokes';
 import { supabase, supabaseConfigured } from './lib/supabase';
 import { addHouse, fetchHouses, removeHouse, setOutOfCandy, updateHouse, verifyPassword } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
 import { loadView, loadVisited, saveView, saveVisited, toggleVisited, type View } from './lib/progress';
+import { completedBuilding } from './lib/houseList';
 import type { House, NewHouse } from './lib/types';
 
 const REFRESH_MS = 60_000;
@@ -62,9 +63,11 @@ export default function App() {
   useEffect(() => saveVisited(storage, visited), [storage, visited]);
 
   // Houses are marked only when the kid taps "היינו כאן" — never automatically by GPS.
-  // Each "היינו כאן" pops a random candy joke (never the same one twice in a row).
-  const [joke, setJoke] = useState<number | null>(null);
-  const lastJoke = useRef<number | undefined>(undefined);
+  // Each "היינו כאן" pops a candy joke from a shuffle bag: every joke is seen once
+  // before any repeats. The bag is kept on the phone so a refresh doesn't restart it.
+  const [joke, setJoke] = useState<{ index: number; note?: string } | null>(null);
+  const housesRef = useRef(houses);
+  housesRef.current = houses;
   const visitedRef = useRef(visited);
   visitedRef.current = visited;
 
@@ -72,11 +75,12 @@ export default function App() {
     const marking = !visitedRef.current.has(id);
     setVisited((v) => toggleVisited(v, id));
     if (marking) {
-      const i = pickJoke(Math.random, lastJoke.current);
-      lastJoke.current = i;
-      setJoke(i);
+      const { index, bag } = nextJoke(loadJokeBag(storage));
+      saveJokeBag(storage, bag);
+      const building = completedBuilding(housesRef.current, visitedRef.current, id);
+      setJoke({ index, note: building ? `🏢 סיימתם את כל הבניין ב${building}! 🎉` : undefined });
     }
-  }, []);
+  }, [storage]);
   const dismissJoke = useCallback(() => setJoke(null), []);
 
   // Any call that finds the password no longer valid locks the panel again.
@@ -190,7 +194,7 @@ export default function App() {
 
       <WelcomePopup />
 
-      {joke !== null && <JokeToast joke={JOKES[joke]} onDone={dismissJoke} />}
+      {joke !== null && <JokeToast joke={JOKES[joke.index]} note={joke.note} onDone={dismissJoke} />}
 
       {adminOpen && !adminPassword && (
         <PasswordPrompt

@@ -96,3 +96,14 @@ export function searchHouses(houses: House[], query: string, limit = MAX_RESULTS
 export function isAllDone(houses: House[], visited: ReadonlySet<string>): boolean {
   return houses.some((h) => visited.has(h.id)) && houses.every((h) => visited.has(h.id) || h.out_of_candy);
 }
+
+/**
+ * Marking `id` finished a building with several apartments (every other apartment
+ * there is visited or out of candy)? Returns the building's address, else null.
+ */
+export function completedBuilding(houses: House[], visited: ReadonlySet<string>, id: string): string | null {
+  const group = groupByLocation(houses).find((g) => g.houses.some((h) => h.id === id));
+  if (!group || group.houses.length < 2) return null;
+  const othersDone = group.houses.every((h) => h.id === id || visited.has(h.id) || h.out_of_candy);
+  return othersDone ? group.houses[0].address : null;
+}

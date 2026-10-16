@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isAllDone } from './houseList';
+import { completedBuilding, isAllDone } from './houseList';
 import type { House } from './types';
 
 const house = (id: string, lat: number, lng: number, over: Partial<House> = {}): House => ({
@@ -38,3 +38,30 @@ describe('isAllDone', () => {
   });
 });
 
+
+describe('completedBuilding', () => {
+  const apt = (id: string, address: string, over: Partial<House> = {}) => house(id, 32.05, 34.858, { address, ...over });
+  const houses = [
+    apt('a', 'נהר הירדן 27', { apartment: '12' }),
+    apt('b', 'נהר הירדן 27', { apartment: '29' }),
+    apt('c', 'נהר הירדן 27', { apartment: '30' }),
+    { ...apt('d', 'יפה נוף 38'), lat: 32.06 },
+  ];
+
+  it('returns the building address when marking its last apartment', () => {
+    expect(completedBuilding(houses, new Set(['a', 'b']), 'c')).toBe('נהר הירדן 27');
+  });
+
+  it('is null while other apartments in the building are left', () => {
+    expect(completedBuilding(houses, new Set(['a']), 'c')).toBeNull();
+  });
+
+  it('counts apartments that ran out of candy as done', () => {
+    const withOut = houses.map((h) => (h.id === 'b' ? { ...h, out_of_candy: true } : h));
+    expect(completedBuilding(withOut, new Set(['a']), 'c')).toBe('נהר הירדן 27');
+  });
+
+  it('is null for a single-family house', () => {
+    expect(completedBuilding(houses, new Set(), 'd')).toBeNull();
+  });
+});

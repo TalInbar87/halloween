@@ -135,6 +135,7 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
               >
                 <Popup>
                   <div className="popup">
+                    {g.houses.length > 1 && remaining === 0 && <p className="building-done">כל הבניין בוקר! 🎉</p>}
                     {g.houses.map((h) => {
                       const done = visited.has(h.id);
                       return (
