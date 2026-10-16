@@ -1,5 +1,5 @@
 // Popped after every "היינו כאן". A shuffle bag makes sure every joke is seen:
-// all six once (in random order) before any repeats, then a fresh shuffle.
+// all of them once (in random order) before any repeats, then a fresh shuffle.
 
 export interface Joke {
   text: string;
@@ -13,6 +13,9 @@ export const JOKES: readonly Joke[] = [
   { text: 'אין דבר כזה יותר מדי ממתקים. יש שקיות קטנות מידי', emoji: '🛍️🍭' },
   { text: 'שקית ריקה לא אומרת שהבטן מלאה', emoji: '🤫👀' },
   { text: 'כל זמן הוא זמן טוב לאכול ממתקים', emoji: '🤓🍬' },
+  { text: 'אם אתם לא רוצים שיהיה לכם כאב בטן מהממתקים מחר בבוקר פשוט תתעוררו בצהריים', emoji: '😴☀️' },
+  { text: 'בשוקולד יש ממש מעט ויטמינים אם ככה אין ברירה לאכול המון שוקולד', emoji: '🍫💪' },
+  { text: 'תשעה מתוך כל עשרה אנשים אוהבים ממתקים. העשירי שקרן...', emoji: '🤥🍭' },
 ];
 
 export interface JokeBag {

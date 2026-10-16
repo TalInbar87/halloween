@@ -35,8 +35,8 @@ function draw(n: number, random = seeded(7), bag: JokeBag = { queue: [] }) {
 }
 
 describe('JOKES', () => {
-  it('has the six phrases, each with its own emoji', () => {
-    expect(JOKES).toHaveLength(6);
+  it('has the nine phrases, each with its own emoji', () => {
+    expect(JOKES).toHaveLength(9);
     for (const j of JOKES) {
       expect(j.text.length).toBeGreaterThan(10);
       expect(j.emoji).toMatch(/\p{Extended_Pictographic}/u);
@@ -51,6 +51,9 @@ describe('JOKES', () => {
       { text: 'אין דבר כזה יותר מדי ממתקים. יש שקיות קטנות מידי', emoji: '🛍️🍭' },
       { text: 'שקית ריקה לא אומרת שהבטן מלאה', emoji: '🤫👀' },
       { text: 'כל זמן הוא זמן טוב לאכול ממתקים', emoji: '🤓🍬' },
+      { text: 'אם אתם לא רוצים שיהיה לכם כאב בטן מהממתקים מחר בבוקר פשוט תתעוררו בצהריים', emoji: '😴☀️' },
+      { text: 'בשוקולד יש ממש מעט ויטמינים אם ככה אין ברירה לאכול המון שוקולד', emoji: '🍫💪' },
+      { text: 'תשעה מתוך כל עשרה אנשים אוהבים ממתקים. העשירי שקרן...', emoji: '🤥🍭' },
     ]);
   });
 });
