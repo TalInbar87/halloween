@@ -146,8 +146,40 @@ body {
 }
 
 .marker-done {
-  font-size: 22px;
-  opacity: 0.85;
+  font-size: 20px;
+}
+
+/* Visited: a golden "collected" candy coin */
+.marker-coin {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3b0 0%, #ffd34d 35%, #f0a020 75%, #c97a0a 100%);
+  border: 2px solid #fff6d6;
+  box-shadow:
+    0 0 0 1px rgb(201 122 10 / 0.6),
+    0 0 8px 2px rgb(255 211 77 / 0.5),
+    0 1px 3px rgb(0 0 0 / 0.35);
+  animation: coin-shine 2.4s ease-in-out infinite;
+}
+
+@keyframes coin-shine {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgb(201 122 10 / 0.6),
+      0 0 6px 1px rgb(255 211 77 / 0.4),
+      0 1px 3px rgb(0 0 0 / 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgb(201 122 10 / 0.6),
+      0 0 10px 3px rgb(255 211 77 / 0.7),
+      0 1px 3px rgb(0 0 0 / 0.35);
+  }
 }
 
 .me-dot {
@@ -1063,7 +1095,7 @@ button:focus-visible {
   position: relative;
   z-index: 1;
   width: min(86vw, 360px);
-  padding: 22px 22px 14px;
+  padding: 22px;
   border-radius: 22px;
   text-align: center;
   color: var(--text);
@@ -1100,13 +1132,6 @@ button:focus-visible {
   color: var(--green);
   font-weight: 700;
   animation: joke-bounce 0.9s cubic-bezier(0.3, 1.8, 0.5, 1) 0.35s both;
-}
-
-.joke-hint {
-  display: block;
-  margin-top: 12px;
-  font-size: 0.75rem;
-  color: var(--muted);
 }
 
 .joke-burst {
@@ -1189,7 +1214,8 @@ button:focus-visible {
   .joke-stage,
   .joke-card,
   .joke-emoji,
-  .joke-note {
+  .joke-note,
+  .marker-coin {
     animation: none;
   }
   .joke-burst {

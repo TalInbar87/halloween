@@ -9,7 +9,7 @@ import { ProgressBar } from './ProgressBar';
 import { HouseTable } from './HouseTable';
 import { Celebration } from './Celebration';
 import type { View } from '../lib/progress';
-import { AutoResize, OsmTiles, defaultCenter, groupIcon, meIcon } from './mapShared';
+import { AutoResize, OsmTiles, defaultCenter, groupIcon, markerZOffset, meIcon } from './mapShared';
 
 interface Props {
   houses: House[];
@@ -132,6 +132,7 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
                 key={g.key}
                 position={[g.lat, g.lng]}
                 icon={groupIcon({ remaining, total: g.houses.length, available })}
+                zIndexOffset={markerZOffset({ remaining })}
               >
                 <Popup>
                   <div className="popup">

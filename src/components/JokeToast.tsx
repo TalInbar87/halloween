@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { Joke } from '../lib/jokes';
 
-const SHOW_MS = 5000;
+const SHOW_MS = 3000;
 
 // Candies that burst out from behind the card, each flying at its own angle.
 const BURST = ['🍬', '🍭', '🍫', '🍬', '🍪', '🍭', '🍫', '🍬', '🧁', '🍭', '🍫', '🍬'];
@@ -26,9 +26,6 @@ export function JokeToast({ joke, note, onDone }: { joke: Joke; note?: string; o
         <div className="joke-emoji">{joke.emoji}</div>
         <p className="joke-text">{joke.text}</p>
         {note && <p className="joke-note">{note}</p>}
-        <span className="joke-hint" aria-hidden="true">
-          הקישו לסגירה
-        </span>
       </div>
     </div>
   );

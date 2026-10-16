@@ -25,14 +25,19 @@ describe('JokeToast', () => {
     expect(screen.getByRole('status')).toHaveTextContent('סיימתם את כל הבניין בנהר הירדן 27');
   });
 
-  it('goes away by itself after a few seconds', () => {
+  it('closes by itself after 3 seconds', () => {
     vi.useFakeTimers();
     const onDone = vi.fn();
     render(<JokeToast joke={joke} onDone={onDone} />);
-    act(() => vi.advanceTimersByTime(3000));
+    act(() => vi.advanceTimersByTime(2900));
     expect(onDone).not.toHaveBeenCalled();
-    act(() => vi.advanceTimersByTime(2500));
+    act(() => vi.advanceTimersByTime(100));
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no "tap to close" text', () => {
+    render(<JokeToast joke={joke} onDone={vi.fn()} />);
+    expect(screen.queryByText('הקישו לסגירה')).not.toBeInTheDocument();
   });
 
   it('can be tapped away anywhere', () => {
@@ -46,9 +51,9 @@ describe('JokeToast', () => {
     vi.useFakeTimers();
     const onDone = vi.fn();
     const { rerender } = render(<JokeToast joke={joke} onDone={onDone} />);
-    act(() => vi.advanceTimersByTime(4000));
+    act(() => vi.advanceTimersByTime(2000));
     rerender(<JokeToast joke={{ text: 'אחר', emoji: '🍫' }} onDone={onDone} />);
-    act(() => vi.advanceTimersByTime(4000));
+    act(() => vi.advanceTimersByTime(2000));
     expect(onDone).not.toHaveBeenCalled();
   });
 });

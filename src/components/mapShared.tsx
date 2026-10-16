@@ -47,7 +47,7 @@ interface GroupState {
 
 /**
  * Pumpkin while there are houses to visit (badge = how many left in a building),
- * check mark when all visited, grey pumpkin when every house here is out of candy.
+ * a golden "collected" candy coin when all visited, grey pumpkin when out of candy.
  * Icons are cached so re-renders don't rebuild the marker (which would close an open popup).
  */
 export function groupIcon({ remaining, total, available }: GroupState): L.DivIcon {
@@ -58,7 +58,7 @@ export function groupIcon({ remaining, total, available }: GroupState): L.DivIco
   if (!icon) {
     const badge = total > 1 && !done && !out ? `<span class="marker-badge">${remaining}</span>` : '';
     icon = L.divIcon({
-      html: `${done ? '✅' : '🎃'}${badge}`,
+      html: done ? '<span class="marker-coin">🍬</span>' : `🎃${badge}`,
       className: `marker ${done ? 'marker-done' : out ? 'marker-out' : 'marker-todo'}`,
       iconSize: [36, 36],
       iconAnchor: [18, 18],
@@ -67,6 +67,11 @@ export function groupIcon({ remaining, total, available }: GroupState): L.DivIco
     groupIcons.set(key, icon);
   }
   return icon;
+}
+
+/** Visited coins sit underneath, so pumpkins still to visit are never hidden by them. */
+export function markerZOffset({ remaining }: { remaining: number }): number {
+  return remaining === 0 ? -1000 : 0;
 }
 
 export const pinIcon = emojiIcon('🏠', 'marker-pin');
