@@ -134,9 +134,10 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
                 icon={groupIcon({ remaining, total: g.houses.length, available })}
                 zIndexOffset={markerZOffset({ remaining })}
               >
-                <Popup>
+                {/* Big buildings (e.g. 7 apartments) scroll inside the popup instead of overflowing the screen. */}
+                <Popup maxHeight={280}>
                   <div className="popup">
-                    {g.houses.length > 1 && remaining === 0 && <p className="building-done">כל הבניין בוקר! 🎉</p>}
+                    {g.houses.length > 1 && remaining === 0 && <p className="building-done">לא השארתם ממתק אחד בבניין 😋🍬</p>}
                     {g.houses.map((h) => {
                       const done = visited.has(h.id);
                       return (
