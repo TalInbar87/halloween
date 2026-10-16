@@ -8,6 +8,37 @@ interface Props {
   /** Admin panel is already unlocked; rejects with `rate_limited`, … */
   onRemove: (id: string) => Promise<void>;
   onEdit: (house: House) => void;
+  onSetOutOfCandy: (id: string, out: boolean) => Promise<void>;
+}
+
+function OutOfCandyButton({ house, onSet }: { house: House; onSet: Props['onSetOutOfCandy'] }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle() {
+    setBusy(true);
+    setError(null);
+    try {
+      await onSet(house.id, !house.out_of_candy);
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <button type="button" className="btn secondary" onClick={toggle} disabled={busy}>
+        {house.out_of_candy ? 'יש שוב ממתקים' : 'נגמרו הממתקים'}
+      </button>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+    </>
+  );
 }
 
 function RemoveButton({ house, onRemove }: { house: House; onRemove: Props['onRemove'] }) {
@@ -52,7 +83,7 @@ function RemoveButton({ house, onRemove }: { house: House; onRemove: Props['onRe
   );
 }
 
-export function HouseList({ houses, onRemove, onEdit }: Props) {
+export function HouseList({ houses, onRemove, onEdit, onSetOutOfCandy }: Props) {
   const [query, setQuery] = useState('');
   const [removedMsg, setRemovedMsg] = useState<string | null>(null);
   const listId = useId();
@@ -99,7 +130,9 @@ export function HouseList({ houses, onRemove, onEdit }: Props) {
         {results.map((h) => (
           <li key={h.id} role="option" aria-selected={false}>
             <span className="result-address">{formatAddress(h)}</span>
+            {h.out_of_candy && <span className="out-label">נגמרו הממתקים 😢</span>}
             <div className="result-actions">
+              <OutOfCandyButton house={h} onSet={onSetOutOfCandy} />
               <button type="button" className="btn secondary" onClick={() => onEdit(h)}>
                 עריכה
               </button>

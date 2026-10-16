@@ -13,13 +13,20 @@ export function defaultCenter(): LatLng {
   return Number.isFinite(lat) && Number.isFinite(lng) && raw ? { lat, lng } : NEIGHBOURHOOD;
 }
 
-export function OsmTiles() {
-  return (
+const OSM_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+/** Regular OpenStreetMap tiles, or the dark CARTO "Halloween night" map. */
+export function OsmTiles({ theme = 'light' }: { theme?: 'light' | 'dark' }) {
+  return theme === 'dark' ? (
     <TileLayer
-      url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-      maxZoom={19}
-      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      key="dark"
+      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      subdomains="abcd"
+      maxZoom={20}
+      attribution={`${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`}
     />
+  ) : (
+    <TileLayer key="light" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" maxZoom={19} attribution={OSM_ATTRIBUTION} />
   );
 }
 
@@ -40,20 +47,29 @@ const emojiIcon = (emoji: string, className: string) =>
 
 const groupIcons = new Map<string, L.DivIcon>();
 
+interface GroupState {
+  /** Houses here not yet visited. */
+  remaining: number;
+  total: number;
+  /** Houses here that still have candy. */
+  available: number;
+}
+
 /**
- * Pumpkin until every apartment at this spot is visited, then a check mark.
- * Buildings with several apartments show how many are left. Icons are cached so
- * re-renders don't rebuild the marker (which would close an open popup).
+ * Pumpkin while there are houses to visit (badge = how many left in a building),
+ * check mark when all visited, grey pumpkin when every house here is out of candy.
+ * Icons are cached so re-renders don't rebuild the marker (which would close an open popup).
  */
-export function groupIcon(remaining: number, total: number): L.DivIcon {
-  const key = `${remaining}/${total}`;
+export function groupIcon({ remaining, total, available }: GroupState): L.DivIcon {
+  const out = available === 0 && remaining > 0;
+  const done = remaining === 0;
+  const key = `${remaining}/${total}/${out ? 'out' : 'in'}`;
   let icon = groupIcons.get(key);
   if (!icon) {
-    const done = remaining === 0;
-    const badge = total > 1 && !done ? `<span class="marker-badge">${remaining}</span>` : '';
+    const badge = total > 1 && !done && !out ? `<span class="marker-badge">${remaining}</span>` : '';
     icon = L.divIcon({
       html: `${done ? '✅' : '🎃'}${badge}`,
-      className: `marker ${done ? 'marker-done' : 'marker-todo'}`,
+      className: `marker ${done ? 'marker-done' : out ? 'marker-out' : 'marker-todo'}`,
       iconSize: [36, 36],
       iconAnchor: [18, 18],
       popupAnchor: [0, -16],
@@ -62,5 +78,8 @@ export function groupIcon(remaining: number, total: number): L.DivIcon {
   }
   return icon;
 }
+
+export const targetIcon = L.divIcon({ html: '', className: 'target-ring', iconSize: [52, 52], iconAnchor: [26, 26] });
+
 export const pinIcon = emojiIcon('🏠', 'marker-pin');
 export const meIcon = L.divIcon({ html: '', className: 'me-dot', iconSize: [18, 18], iconAnchor: [9, 9] });

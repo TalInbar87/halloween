@@ -10,6 +10,7 @@ const house = (id: string, over: Partial<House> = {}): House => ({
   apartment: null,
   floor: null,
   building_code: null,
+  out_of_candy: false,
   lat: 32.05,
   lng: 34.858,
   notes: null,

@@ -7,10 +7,20 @@ import { AdminPanel } from './components/AdminPanel';
 import { Countdown } from './components/Countdown';
 import { WelcomePopup } from './components/WelcomePopup';
 import { supabase, supabaseConfigured } from './lib/supabase';
-import { addHouse, fetchHouses, removeHouse, updateHouse, verifyPassword } from './lib/houses';
+import { addHouse, fetchHouses, removeHouse, setOutOfCandy, updateHouse, verifyPassword } from './lib/houses';
 import { geocodeAddress, reverseGeocode } from './lib/geocode';
 import { locateOnce } from './lib/locate';
-import { loadView, loadVisited, saveView, saveVisited, toggleVisited, type View } from './lib/progress';
+import {
+  loadMapTheme,
+  loadView,
+  loadVisited,
+  saveMapTheme,
+  saveView,
+  saveVisited,
+  toggleVisited,
+  type MapTheme,
+  type View,
+} from './lib/progress';
 import type { House, NewHouse } from './lib/types';
 
 const REFRESH_MS = 60_000;
@@ -34,6 +44,7 @@ export default function App() {
   const [visited, setVisited] = useState(() => loadVisited(storage));
   const [editing, setEditing] = useState<House | null>(null);
   const [view, setView] = useState<View>(() => loadView(storage));
+  const [theme, setTheme] = useState<MapTheme>(() => loadMapTheme(storage));
 
   const refresh = useCallback(async () => {
     try {
@@ -79,6 +90,16 @@ export default function App() {
   async function handleRemove(id: string) {
     await asAdmin((pw) => removeHouse(supabase, id, pw));
     refresh();
+  }
+
+  async function handleSetOutOfCandy(id: string, out: boolean) {
+    await asAdmin((pw) => setOutOfCandy(supabase, id, out, pw));
+    refresh();
+  }
+
+  function changeTheme(next: MapTheme) {
+    setTheme(next);
+    saveMapTheme(storage, next);
   }
 
   function changeView(next: View) {
@@ -148,7 +169,12 @@ export default function App() {
                 onAdded={refresh}
               />
             }
-            removeList={<HouseList houses={houses} onRemove={handleRemove} onEdit={setEditing} />}
+            removeList={<HouseList
+                houses={houses}
+                onRemove={handleRemove}
+                onEdit={setEditing}
+                onSetOutOfCandy={handleSetOutOfCandy}
+              />}
           />
         ) : (
           <KidMap
@@ -157,6 +183,8 @@ export default function App() {
             onToggle={onToggle}
             view={view}
             onViewChange={changeView}
+            theme={theme}
+            onThemeChange={changeTheme}
           />
         )}
       </main>

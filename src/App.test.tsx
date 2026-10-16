@@ -18,6 +18,7 @@ const fixtureHouse = {
   apartment: '20',
   floor: '5',
   building_code: null,
+  out_of_candy: false,
   notes: null,
   lat: 32.0507,
   lng: 34.858,

@@ -10,6 +10,7 @@ const house = (id: string, lat: number, lng: number): House => ({
   apartment: null,
   floor: null,
   building_code: null,
+  out_of_candy: false,
   lat,
   lng,
   notes: null,

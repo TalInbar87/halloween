@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchHouses, addHouse, updateHouse, removeHouse, verifyPassword, friendlyError } from './houses';
+import { fetchHouses, addHouse, updateHouse, removeHouse, setOutOfCandy, verifyPassword, friendlyError } from './houses';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 function clientWith(overrides: { select?: unknown; rpc?: unknown }) {
@@ -14,7 +14,7 @@ describe('fetchHouses', () => {
   it('selects only public columns', async () => {
     const { client, select } = clientWith({ select: { data: [], error: null } });
     await fetchHouses(client);
-    expect(select).toHaveBeenCalledWith('id,address,street,house_number,apartment,floor,building_code,lat,lng,notes,created_at');
+    expect(select).toHaveBeenCalledWith('id,address,street,house_number,apartment,floor,building_code,out_of_candy,lat,lng,notes,created_at');
   });
 
   it('returns rows', async () => {
@@ -92,6 +92,19 @@ describe('updateHouse', () => {
   it('throws on RPC error', async () => {
     const { client } = clientWith({ rpc: { data: null, error: { message: 'duplicate_house' } } });
     await expect(updateHouse(client, 'h1', input, 'secret')).rejects.toThrow('duplicate_house');
+  });
+});
+
+describe('setOutOfCandy', () => {
+  it('calls set_out_of_candy with the adults password', async () => {
+    const { client, rpc } = clientWith({ rpc: { data: { ok: true }, error: null } });
+    await setOutOfCandy(client, 'h1', true, 'secret');
+    expect(rpc).toHaveBeenCalledWith('set_out_of_candy', { p_password: 'secret', p_id: 'h1', p_out: true });
+  });
+
+  it('throws the server error', async () => {
+    const { client } = clientWith({ rpc: { data: { ok: false, error: 'wrong_password' }, error: null } });
+    await expect(setOutOfCandy(client, 'h1', false, 'x')).rejects.toThrow('wrong_password');
   });
 });
 

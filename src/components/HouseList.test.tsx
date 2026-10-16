@@ -12,6 +12,7 @@ const house = (id: string, address: string, over: Partial<House> = {}): House =>
   apartment: null,
   floor: null,
   building_code: null,
+  out_of_candy: false,
   lat: 32.05,
   lng: 34.858,
   notes: null,
@@ -25,7 +26,13 @@ const houses = [
 ];
 
 function setup(over: Partial<Parameters<typeof HouseList>[0]> = {}) {
-  const props = { houses, onRemove: vi.fn().mockResolvedValue(undefined), onEdit: vi.fn(), ...over };
+  const props = {
+    houses,
+    onRemove: vi.fn().mockResolvedValue(undefined),
+    onEdit: vi.fn(),
+    onSetOutOfCandy: vi.fn().mockResolvedValue(undefined),
+    ...over,
+  };
   render(<HouseList {...props} />);
   return { ...props, user: userEvent.setup() };
 }
@@ -73,6 +80,20 @@ describe('HouseList', () => {
     await user.type(search(), 'צהל');
     await user.click(screen.getByRole('button', { name: 'עריכה' }));
     expect(onEdit).toHaveBeenCalledWith(houses[1]);
+  });
+
+  it('marks a house as out of candy, and back', async () => {
+    const { user, onSetOutOfCandy } = setup({
+      houses: [houses[0], { ...houses[1], out_of_candy: true }],
+    });
+    await user.type(search(), 'ירד');
+    await user.click(screen.getByRole('button', { name: 'נגמרו הממתקים' }));
+    expect(onSetOutOfCandy).toHaveBeenCalledWith('a', true);
+    await user.clear(search());
+    await user.type(search(), 'צהל');
+    expect(screen.getByText('נגמרו הממתקים 😢')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'יש שוב ממתקים' }));
+    expect(onSetOutOfCandy).toHaveBeenCalledWith('b', false);
   });
 
   it('asks to confirm before removing', async () => {

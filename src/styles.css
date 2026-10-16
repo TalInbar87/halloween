@@ -340,9 +340,13 @@ button:focus-visible {
 /* Leaflet attribution readable on dark */
 .leaflet-container {
   font-family: 'Rubik', system-ui, sans-serif;
-  /* OSM land colour: if Safari leaves a hairline between tile rows, it's invisible
-     instead of a dark line showing through. */
+  /* Same colour as the tiles' land: if Safari leaves a hairline between tile rows,
+     it's invisible instead of a contrasting line showing through. */
   background: #f2efe9;
+}
+
+.leaflet-container.map-dark {
+  background: #262626;
 }
 
 /* Close the sub-pixel seams iOS Safari draws between tiles when the map sits at a
@@ -949,4 +953,222 @@ button:focus-visible {
   font-weight: 500;
   color: var(--muted);
   text-shadow: none;
+}
+
+/* Map controls row: view switch + dark/light map */
+.kid-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+/* Out of candy */
+.marker-out {
+  filter: grayscale(1) brightness(0.8);
+  opacity: 0.75;
+}
+
+.out-label {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.popup .out-label {
+  color: #6b6b6b;
+}
+
+.house-table tr.is-out .row-address {
+  color: var(--muted);
+}
+
+.popup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Navigation */
+.next-btn {
+  width: 100%;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #2f2148, #221a33);
+  border: 1px solid rgb(255 122 26 / 0.45);
+}
+
+.navbar.arrived {
+  border-color: var(--green);
+}
+
+.navbar-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+.navbar-arrow {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #1a0f00;
+  font-size: 1.2rem;
+  font-weight: 700;
+  transition: transform 0.4s ease;
+}
+
+.navbar-distance,
+.navbar-msg {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--orange);
+}
+
+.navbar.arrived .navbar-msg {
+  color: var(--green);
+}
+
+.navbar-target {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.navbar-stop {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.target-ring {
+  border: 3px solid var(--orange);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgb(255 122 26 / 0.25);
+  animation: pulse 1.4s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0.2;
+  }
+}
+
+.row-nav {
+  width: 1%;
+}
+
+.nav-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* Celebration */
+.celebration {
+  overflow: hidden;
+}
+
+.celebration-card {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  animation: pop-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.celebration-card h2 {
+  color: var(--orange);
+  font-size: 1.4rem;
+  margin: 4px 0 8px;
+}
+
+.celebration-card .btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.celebration-trophy {
+  font-size: 64px;
+  line-height: 1;
+  animation: bob 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes confetti-fall {
+  to {
+    top: 105%;
+    transform: rotate(720deg) translateX(30px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .target-ring,
+  .celebration-card,
+  .celebration-trophy,
+  .confetti-piece {
+    animation: none;
+  }
+  .confetti {
+    display: none;
+  }
 }

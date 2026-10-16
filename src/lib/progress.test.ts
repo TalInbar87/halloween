@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { loadVisited, saveVisited, toggleVisited, loadView, saveView } from './progress';
+import { loadVisited, saveVisited, toggleVisited, loadView, saveView, loadMapTheme, saveMapTheme } from './progress';
 
 function memoryStorage(): Storage {
   const data = new Map<string, string>();
@@ -84,5 +84,21 @@ describe('map/table view preference', () => {
   it('survives storage that throws', () => {
     expect(loadView(throwingStorage())).toBe('map');
     expect(() => saveView(throwingStorage(), 'table')).not.toThrow();
+  });
+});
+
+describe('map theme preference', () => {
+  it('defaults to the dark Halloween map', () => {
+    expect(loadMapTheme(memoryStorage())).toBe('dark');
+  });
+
+  it('round-trips the light map', () => {
+    const s = memoryStorage();
+    saveMapTheme(s, 'light');
+    expect(loadMapTheme(s)).toBe('light');
+  });
+
+  it('survives storage that throws', () => {
+    expect(loadMapTheme(throwingStorage())).toBe('dark');
   });
 });

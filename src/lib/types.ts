@@ -12,6 +12,8 @@ export interface House extends LatLng {
   apartment: string | null;
   floor: string | null;
   building_code: string | null;
+  /** Set by an adult when the house has no candy left tonight. */
+  out_of_candy: boolean;
   notes: string | null;
   created_at: string;
 }

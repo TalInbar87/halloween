@@ -3,7 +3,7 @@ import type { House, NewHouse } from './types';
 
 // Anonymous visitors can only read these columns. Adding and removing go through
 // SQL functions that check the adults password and rate-limit (see supabase/migrations).
-const PUBLIC_COLUMNS = 'id,address,street,house_number,apartment,floor,building_code,lat,lng,notes,created_at';
+const PUBLIC_COLUMNS = 'id,address,street,house_number,apartment,floor,building_code,out_of_candy,lat,lng,notes,created_at';
 
 type RpcResult = { ok?: boolean; error?: string; id?: string } | null;
 
@@ -46,6 +46,14 @@ export async function updateHouse(client: SupabaseClient, id: string, house: New
     p_lat: house.lat,
     p_lng: house.lng,
   });
+  if (error) throw new Error(error.message);
+  const result = data as RpcResult;
+  if (!result?.ok) throw new Error(result?.error ?? 'empty_response');
+}
+
+/** Adults mark a house as out of candy for tonight (or back). */
+export async function setOutOfCandy(client: SupabaseClient, id: string, out: boolean, password: string): Promise<void> {
+  const { data, error } = await client.rpc('set_out_of_candy', { p_password: password, p_id: id, p_out: out });
   if (error) throw new Error(error.message);
   const result = data as RpcResult;
   if (!result?.ok) throw new Error(result?.error ?? 'empty_response');
