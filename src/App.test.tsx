@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, beforeEach } from 'vitest';
 
@@ -75,7 +75,8 @@ import { JOKES } from './lib/jokes';
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
-  localStorage.setItem('halloween.access.v1', JSON.stringify('ourstreet')); // already let in
+  // already let in, an hour ago
+  localStorage.setItem('halloween.access.v1', JSON.stringify({ password: 'ourstreet', expires: Date.now() + 4 * 3600_000 }));
   api.fetchHouses.mockResolvedValue([]);
   api.updateHouse.mockResolvedValue(undefined);
   api.verifyPassword.mockResolvedValue(undefined);
@@ -241,7 +242,7 @@ describe('App', () => {
       await user.type(screen.getByLabelText('סיסמת השכונה'), 'ourstreet{Enter}');
       expect(await screen.findByTestId('kid-map')).toBeInTheDocument();
       expect(api.fetchHouses).toHaveBeenCalledWith({}, 'ourstreet');
-      expect(JSON.parse(localStorage.getItem('halloween.access.v1')!)).toBe('ourstreet');
+      expect(JSON.parse(localStorage.getItem('halloween.access.v1')!).password).toBe('ourstreet');
     });
 
     it('keeps the map closed after a wrong password', async () => {
@@ -262,6 +263,24 @@ describe('App', () => {
       expect(screen.getByLabelText('סיסמת השכונה')).toBeInTheDocument();
       expect(screen.queryByTestId('kid-map')).not.toBeInTheDocument();
       expect(localStorage.getItem('halloween.access.v1')).toBeNull();
+    });
+
+    it('asks again once the 5 hours are up', () => {
+      localStorage.setItem('halloween.access.v1', JSON.stringify({ password: 'ourstreet', expires: Date.now() - 1 }));
+      render(<App />);
+      expect(screen.getByLabelText('סיסמת השכונה')).toBeInTheDocument();
+      expect(screen.queryByTestId('kid-map')).not.toBeInTheDocument();
+    });
+
+    it('locks an open page once the 5 hours run out', async () => {
+      render(<App />);
+      expect(screen.getByTestId('kid-map')).toBeInTheDocument();
+      localStorage.setItem('halloween.access.v1', JSON.stringify({ password: 'ourstreet', expires: Date.now() - 1 }));
+      act(() => {
+        window.dispatchEvent(new Event('focus')); // coming back to the app (or the 1-minute refresh)
+      });
+      expect(await screen.findByText(/עברו 5 שעות/)).toBeInTheDocument();
+      expect(screen.queryByTestId('kid-map')).not.toBeInTheDocument();
     });
 
     it('uses the remembered password for loading houses', async () => {

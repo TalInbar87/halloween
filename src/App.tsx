@@ -55,6 +55,11 @@ export default function App() {
 
   const refresh = useCallback(async () => {
     if (!access) return;
+    // Logged in for 5 hours: an open page also locks once they're up.
+    if (!loadAccess(storage)) {
+      lockOut('עברו 5 שעות. נא להזין שוב את סיסמת השכונה.');
+      return;
+    }
     try {
       setHouses(await fetchHouses(supabase, access));
       setLoadError(false);
@@ -65,7 +70,7 @@ export default function App() {
         setLoadError(true);
       }
     }
-  }, [access, lockOut]);
+  }, [access, lockOut, storage]);
 
   async function unlock(password: string) {
     const list = await fetchHouses(supabase, password); // rejects on a wrong password
