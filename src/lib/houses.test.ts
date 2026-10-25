@@ -11,21 +11,28 @@ function clientWith(overrides: { select?: unknown; rpc?: unknown }) {
 }
 
 describe('fetchHouses', () => {
-  it('selects only public columns', async () => {
-    const { client, select } = clientWith({ select: { data: [], error: null } });
-    await fetchHouses(client);
-    expect(select).toHaveBeenCalledWith('id,address,street,house_number,apartment,floor,building_code,out_of_candy,lat,lng,notes,created_at');
+  const row = { id: '1', address: 'a', apartment: null, floor: null, building_code: null, lat: 32, lng: 34.8, notes: null, created_at: 'x' };
+
+  it('asks list_houses with the neighbourhood password (the table is not readable directly)', async () => {
+    const { client, rpc, from } = clientWith({ rpc: { data: { ok: true, houses: [row] }, error: null } });
+    expect(await fetchHouses(client, 'ourstreet')).toEqual([row]);
+    expect(rpc).toHaveBeenCalledWith('list_houses', { p_password: 'ourstreet' });
+    expect(from).not.toHaveBeenCalled();
   });
 
-  it('returns rows', async () => {
-    const row = { id: '1', address: 'a', apartment: null, floor: null, building_code: null, lat: 32, lng: 34.8, notes: null, created_at: 'x' };
-    const { client } = clientWith({ select: { data: [row], error: null } });
-    expect(await fetchHouses(client)).toEqual([row]);
+  it('returns an empty list when the server sends no houses', async () => {
+    const { client } = clientWith({ rpc: { data: { ok: true, houses: null }, error: null } });
+    expect(await fetchHouses(client, 'x')).toEqual([]);
   });
 
-  it('throws on error', async () => {
-    const { client } = clientWith({ select: { data: null, error: { message: 'boom' } } });
-    await expect(fetchHouses(client)).rejects.toThrow();
+  it('throws wrong_password when the password is rejected', async () => {
+    const { client } = clientWith({ rpc: { data: { ok: false, error: 'wrong_password' }, error: null } });
+    await expect(fetchHouses(client, 'nope')).rejects.toThrow('wrong_password');
+  });
+
+  it('throws on RPC error', async () => {
+    const { client } = clientWith({ rpc: { data: null, error: { message: 'rate_limited' } } });
+    await expect(fetchHouses(client, 'x')).rejects.toThrow('rate_limited');
   });
 });
 

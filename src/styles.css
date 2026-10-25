@@ -1244,3 +1244,46 @@ button:focus-visible {
   border-bottom: none;
   padding-inline-end: 4px;
 }
+
+/* Neighbourhood password screen */
+.gate {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  padding: 16px;
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 380px;
+  margin: 0;
+  text-align: center;
+  border: 1px solid rgb(255 122 26 / 0.4);
+  box-shadow: 0 0 32px rgb(255 122 26 / 0.15);
+}
+
+.gate-card h2 {
+  margin: 6px 0;
+  font-size: 1.3rem;
+  color: var(--orange);
+}
+
+.gate-card .form {
+  text-align: start;
+  margin-top: 12px;
+}
+
+.gate-pumpkin {
+  font-size: 56px;
+  line-height: 1;
+  filter: drop-shadow(0 0 14px rgb(255 122 26 / 0.6));
+}
+
+.gate-notice {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgb(255 90 95 / 0.12);
+  color: var(--red);
+  font-size: 0.9rem;
+}

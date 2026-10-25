@@ -1,16 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { House, NewHouse } from './types';
 
-// Anonymous visitors can only read these columns. Adding and removing go through
-// SQL functions that check the adults password and rate-limit (see supabase/migrations).
-const PUBLIC_COLUMNS = 'id,address,street,house_number,apartment,floor,building_code,out_of_candy,lat,lng,notes,created_at';
+// The houses table isn't readable through the API at all: the list comes only from
+// list_houses(), which checks the neighbourhood password. Adding and removing go
+// through SQL functions that check the adults password (see supabase/migrations).
 
-type RpcResult = { ok?: boolean; error?: string; id?: string } | null;
+type RpcResult = { ok?: boolean; error?: string; id?: string; houses?: House[] | null } | null;
 
-export async function fetchHouses(client: SupabaseClient): Promise<House[]> {
-  const { data, error } = await client.from('houses').select(PUBLIC_COLUMNS).order('created_at');
+/** Throws `wrong_password`, `rate_limited`, … */
+export async function fetchHouses(client: SupabaseClient, password: string): Promise<House[]> {
+  const { data, error } = await client.rpc('list_houses', { p_password: password });
   if (error) throw new Error(error.message);
-  return (data ?? []) as House[];
+  const result = data as RpcResult;
+  if (!result?.ok) throw new Error(result?.error ?? 'empty_response');
+  return result.houses ?? [];
 }
 
 /** Returns the new house id. Throws `wrong_password`, `duplicate_house`, `rate_limited`, … */

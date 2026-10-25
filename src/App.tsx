@@ -6,6 +6,8 @@ import { PasswordPrompt } from './components/PasswordPrompt';
 import { AdminPanel } from './components/AdminPanel';
 import { Countdown } from './components/Countdown';
 import { WelcomePopup } from './components/WelcomePopup';
+import { AccessGate } from './components/AccessGate';
+import { clearAccess, loadAccess, saveAccess } from './lib/access';
 import { JokeToast } from './components/JokeToast';
 import { JOKES, loadJokeBag, nextJoke, saveJokeBag } from './lib/jokes';
 import { supabase, supabaseConfigured } from './lib/supabase';
@@ -32,24 +34,50 @@ export default function App() {
   // "lock", reload, or if the server later rejects it (password was changed).
   const [adminPassword, setAdminPassword] = useState<string | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
+  // Neighbourhood password: nothing is loaded or shown until the server accepts it.
+  const [access, setAccess] = useState<string | null>(() => loadAccess(storage));
+  const [accessNotice, setAccessNotice] = useState<string | undefined>(undefined);
   const [houses, setHouses] = useState<House[]>([]);
   const [loadError, setLoadError] = useState(false);
   const [visited, setVisited] = useState(() => loadVisited(storage));
   const [editing, setEditing] = useState<House | null>(null);
   const [view, setView] = useState<View>(() => loadView(storage));
 
+  const lockOut = useCallback(
+    (notice?: string) => {
+      clearAccess(storage);
+      setAccess(null);
+      setHouses([]);
+      setAccessNotice(notice);
+    },
+    [storage],
+  );
+
   const refresh = useCallback(async () => {
+    if (!access) return;
     try {
-      setHouses(await fetchHouses(supabase));
+      setHouses(await fetchHouses(supabase, access));
       setLoadError(false);
-    } catch {
-      setLoadError(true);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('wrong_password')) {
+        lockOut('הסיסמה התחלפה. בקשו את החדשה מהמארגנים.');
+      } else {
+        setLoadError(true);
+      }
     }
-  }, []);
+  }, [access, lockOut]);
+
+  async function unlock(password: string) {
+    const list = await fetchHouses(supabase, password); // rejects on a wrong password
+    setHouses(list);
+    saveAccess(storage, password);
+    setAccessNotice(undefined);
+    setAccess(password);
+  }
 
   // New houses show up for kids already out on the street.
   useEffect(() => {
-    if (!supabaseConfigured) return;
+    if (!supabaseConfigured || !access) return;
     refresh();
     const timer = setInterval(refresh, REFRESH_MS);
     const onFocus = () => refresh();
@@ -119,7 +147,7 @@ export default function App() {
           <h1>
             מפת השכונה הכי טובה <span dir="ltr">EVER!</span>
           </h1>
-          {!adminOpen && (
+          {access && !adminOpen && (
             <button type="button" className="gear" aria-label="ניהול" title="ניהול (למבוגרים)" onClick={() => setAdminOpen(true)}>
               <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
                 <path
@@ -134,10 +162,12 @@ export default function App() {
       </header>
 
       {!supabaseConfigured && <p className="error banner">חסרות הגדרות Supabase (VITE_SUPABASE_URL).</p>}
-      {loadError && <p className="error banner">לא הצלחנו לטעון את הבתים. בודקים שוב בעוד דקה.</p>}
+      {access && loadError && <p className="error banner">לא הצלחנו לטעון את הבתים. בודקים שוב בעוד דקה.</p>}
 
       <main className="main">
-        {adminOpen && adminPassword ? (
+        {!access ? (
+          <AccessGate onUnlock={unlock} notice={accessNotice} />
+        ) : adminOpen && adminPassword ? (
           <AdminPanel
             onClose={() => {
               setEditing(null);
@@ -192,11 +222,11 @@ export default function App() {
         )}
       </main>
 
-      <WelcomePopup />
+      {access && <WelcomePopup />}
 
       {joke !== null && <JokeToast joke={JOKES[joke.index]} note={joke.note} onDone={dismissJoke} />}
 
-      {adminOpen && !adminPassword && (
+      {access && adminOpen && !adminPassword && (
         <PasswordPrompt
           verify={(pw) => verifyPassword(supabase, pw)}
           onUnlock={setAdminPassword}

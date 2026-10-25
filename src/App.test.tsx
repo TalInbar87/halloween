@@ -75,6 +75,7 @@ import { JOKES } from './lib/jokes';
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  localStorage.setItem('halloween.access.v1', JSON.stringify('ourstreet')); // already let in
   api.fetchHouses.mockResolvedValue([]);
   api.updateHouse.mockResolvedValue(undefined);
   api.verifyPassword.mockResolvedValue(undefined);
@@ -221,5 +222,51 @@ describe('App', () => {
     await waitFor(() => expect(api.fetchHouses).toHaveBeenCalled());
     await user.click(screen.getByRole('button', { name: 'stub-toggle' })); // marks h9, the last one
     expect(screen.getByRole('status')).toHaveTextContent('סיימתם את כל הבניין בנהר הירדן 23');
+  });
+
+  describe('neighbourhood password', () => {
+    it('shows only the entry screen to a phone that has not entered it — no map, no houses', () => {
+      localStorage.removeItem('halloween.access.v1');
+      render(<App />);
+      expect(screen.getByLabelText('סיסמת השכונה')).toBeInTheDocument();
+      expect(screen.queryByTestId('kid-map')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'ניהול' })).not.toBeInTheDocument();
+      expect(api.fetchHouses).not.toHaveBeenCalled();
+    });
+
+    it('lets the kid in with the right password and remembers it on the phone', async () => {
+      localStorage.removeItem('halloween.access.v1');
+      const user = userEvent.setup();
+      render(<App />);
+      await user.type(screen.getByLabelText('סיסמת השכונה'), 'ourstreet{Enter}');
+      expect(await screen.findByTestId('kid-map')).toBeInTheDocument();
+      expect(api.fetchHouses).toHaveBeenCalledWith({}, 'ourstreet');
+      expect(JSON.parse(localStorage.getItem('halloween.access.v1')!)).toBe('ourstreet');
+    });
+
+    it('keeps the map closed after a wrong password', async () => {
+      localStorage.removeItem('halloween.access.v1');
+      api.fetchHouses.mockRejectedValue(new Error('wrong_password'));
+      const user = userEvent.setup();
+      render(<App />);
+      await user.type(screen.getByLabelText('סיסמת השכונה'), 'nope{Enter}');
+      expect(await screen.findByRole('alert')).toHaveTextContent('סיסמה שגויה');
+      expect(screen.queryByTestId('kid-map')).not.toBeInTheDocument();
+      expect(localStorage.getItem('halloween.access.v1')).toBeNull();
+    });
+
+    it('asks again, with a note, when the remembered password was changed', async () => {
+      api.fetchHouses.mockRejectedValue(new Error('wrong_password'));
+      render(<App />);
+      expect(await screen.findByText(/הסיסמה התחלפה/)).toBeInTheDocument();
+      expect(screen.getByLabelText('סיסמת השכונה')).toBeInTheDocument();
+      expect(screen.queryByTestId('kid-map')).not.toBeInTheDocument();
+      expect(localStorage.getItem('halloween.access.v1')).toBeNull();
+    });
+
+    it('uses the remembered password for loading houses', async () => {
+      render(<App />);
+      await waitFor(() => expect(api.fetchHouses).toHaveBeenCalledWith({}, 'ourstreet'));
+    });
   });
 });
