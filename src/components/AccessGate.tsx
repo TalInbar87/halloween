@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { friendlyError } from '../lib/houses';
+import { HowToTips } from './HowToTips';
 
 interface Props {
   /** Resolves when the server accepted the password; rejects with `wrong_password`, … */
@@ -38,6 +39,7 @@ export function AccessGate({ onUnlock, notice }: Props) {
         </div>
         <h2>המפה רק לשכונה 🤫</h2>
         <p className="hint">את הסיסמה מקבלים מהמארגנים בקבוצת השכונה.</p>
+        <HowToTips />
         {notice && <p className="gate-notice">{notice}</p>}
         <form className="form" onSubmit={handleSubmit} noValidate>
           <label htmlFor="access-password">סיסמת השכונה</label>

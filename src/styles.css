@@ -1287,3 +1287,13 @@ button:focus-visible {
   color: var(--red);
   font-size: 0.9rem;
 }
+
+/* Tips on the password screen */
+.gate-card .welcome-steps {
+  margin: 14px 0 4px;
+}
+
+/* Countdown inside the welcome popup */
+.welcome .countdown {
+  margin: 4px 0 18px;
+}

@@ -18,6 +18,13 @@ describe('AccessGate', () => {
     expect(input).toHaveFocus();
   });
 
+  it('explains how the map works (the tips moved here from the welcome popup)', () => {
+    setup();
+    for (const tip of [/כל דלעת במפה היא בית שמחלק ממתקים/, /היינו כאן/, /הראו איפה אני/, /יוצאים תמיד עם מבוגר/]) {
+      expect(screen.getByText(tip)).toBeInTheDocument();
+    }
+  });
+
   it('unlocks with the password', async () => {
     const { onUnlock, user } = setup();
     await user.type(screen.getByLabelText('סיסמת השכונה'), 'ourstreet{Enter}');

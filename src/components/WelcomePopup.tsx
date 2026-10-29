@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { markWelcomeSeen, shouldShowWelcome } from '../lib/welcome';
 import { HALLOWEEN_START } from '../lib/countdown';
 import { currentTime } from '../lib/clock';
-import { StartedMessage } from './Countdown';
+import { Countdown } from './Countdown';
 
 interface Props {
   /** Injected for tests; defaults to the real document. */
@@ -10,7 +10,8 @@ interface Props {
 }
 
 export function WelcomePopup({ doc = document }: Props) {
-  const [open, setOpen] = useState(() => shouldShowWelcome(doc));
+  // Once a day, until Halloween starts — after that there's nothing to count down to.
+  const [open, setOpen] = useState(() => currentTime() < HALLOWEEN_START && shouldShowWelcome(doc));
   const titleId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -28,8 +29,6 @@ export function WelcomePopup({ doc = document }: Props) {
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
-
-  const started = currentTime() >= HALLOWEEN_START;
 
   return (
     <div className="overlay welcome-overlay" onClick={close}>
@@ -51,28 +50,7 @@ export function WelcomePopup({ doc = document }: Props) {
         <h2 id={titleId}>
           ברוכים הבאים למפת השכונה הכי טובה <span dir="ltr">EVER!</span>
         </h2>
-        {started ? (
-          <StartedMessage className="welcome-when welcome-started" />
-        ) : (
-          <p className="welcome-when">
-            שבת, 31 באוקטובר · <strong>17:00</strong> · יוצאים לאסוף ממתקים
-          </p>
-        )}
-
-        <ul className="welcome-steps">
-          <li>
-            <span aria-hidden="true">🎃</span> כל דלעת במפה היא בית שמחלק ממתקים
-          </li>
-          <li>
-            <span aria-hidden="true">👆</span> לוחצים על הדלעת ← "היינו כאן!" כדי לסמן
-          </li>
-          <li>
-            <span aria-hidden="true">📍</span> "הראו איפה אני" מראה איפה אתם במפה
-          </li>
-          <li>
-            <span aria-hidden="true">🧡</span> יוצאים תמיד עם מבוגר, ונזהרים בכביש
-          </li>
-        </ul>
+        <Countdown />
 
         <button ref={buttonRef} type="button" className="btn primary welcome-go" onClick={close}>
           יאללה, מתחילים!
