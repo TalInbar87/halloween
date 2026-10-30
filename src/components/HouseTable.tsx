@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { distanceMeters } from '../lib/geo';
-import { formatAddress, sortByAddress, sortByFloor } from '../lib/houseList';
+import { formatAddress, sortByAddress } from '../lib/houseList';
 import type { House, LatLng } from '../lib/types';
 
 interface Props {
@@ -9,33 +9,40 @@ interface Props {
   /** Kid's GPS position, if on: shows meters and allows sorting by distance. */
   position: LatLng | null;
   onToggle: (id: string) => void;
+  /** Turns GPS on when the kid picks distance sorting without it. */
+  onLocate: () => void;
 }
 
-type SortBy = 'address' | 'floor' | 'distance';
+type SortBy = 'address' | 'distance';
 
-const SORT_LABELS: Record<SortBy, string> = { address: 'כתובת', floor: 'קומה ודירה', distance: 'מרחק' };
+const SORT_LABELS: Record<SortBy, string> = { address: 'כתובת', distance: 'הכי קרוב אליי' };
 
-export function HouseTable({ houses, visited, position, onToggle }: Props) {
+export function HouseTable({ houses, visited, position, onToggle, onLocate }: Props) {
   const [sortBy, setSortBy] = useState<SortBy>('address');
   if (houses.length === 0) return <p className="hint table-empty">עדיין אין בתים במפה</p>;
 
-  // Distance needs GPS; without it fall back to address.
-  const active: SortBy = sortBy === 'distance' && !position ? 'address' : sortBy;
-  const options: SortBy[] = position ? ['address', 'floor', 'distance'] : ['address', 'floor'];
+  const choose = (o: SortBy) => {
+    setSortBy(o);
+    if (o === 'distance' && !position) onLocate();
+  };
 
-  const sorted = active === 'floor' ? sortByFloor(houses) : sortByAddress(houses);
-  // Order never depends on `visited`, so ticking a box doesn't move the row away
-  // from under the kid's finger.
-  const rows = sorted.map((h) => ({ house: h, label: formatAddress(h), meters: position ? distanceMeters(position, h) : null }));
-  if (active === 'distance') rows.sort((a, b) => a.meters! - b.meters!);
+  // Address order (street, number, floor, apartment); by distance once GPS has a fix.
+  const rows = sortByAddress(houses).map((h) => ({
+    house: h,
+    label: formatAddress(h),
+    meters: position ? distanceMeters(position, h) : null,
+  }));
+  if (sortBy === 'distance' && position) rows.sort((a, b) => a.meters! - b.meters!);
+  // Houses already visited drop to the bottom (sort is stable, so they keep the same order there).
+  rows.sort((a, b) => Number(visited.has(a.house.id)) - Number(visited.has(b.house.id)));
 
   return (
     <div className="table-wrap">
       <div className="table-sort">
         <span className="hint">מיון לפי</span>
         <div className="view-toggle" role="group" aria-label="מיון">
-          {options.map((o) => (
-            <button key={o} type="button" aria-pressed={active === o} onClick={() => setSortBy(o)}>
+          {(['address', 'distance'] as const).map((o) => (
+            <button key={o} type="button" aria-pressed={sortBy === o} onClick={() => choose(o)}>
               {SORT_LABELS[o]}
             </button>
           ))}

@@ -122,7 +122,7 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
       </div>
 
       {view === 'table' ? (
-        <HouseTable houses={houses} visited={visited} position={me} onToggle={onToggle} />
+        <HouseTable houses={houses} visited={visited} position={me} onToggle={onToggle} onLocate={() => setGpsOn(true)} />
       ) : (
         <MapContainer center={[center.lat, center.lng]} zoom={16} className="kid-map">
           <OsmTiles />
