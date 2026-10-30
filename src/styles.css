@@ -532,12 +532,8 @@ button:focus-visible {
   padding: 0 16px 16px;
 }
 
-.table-sort {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 0;
+.table-filter {
+  margin: 8px 0;
 }
 
 .table-empty {

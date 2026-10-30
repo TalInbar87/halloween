@@ -1,53 +1,37 @@
 import { useState } from 'react';
 import { distanceMeters } from '../lib/geo';
-import { formatAddress, sortByAddress } from '../lib/houseList';
+import { formatAddress, searchHouses, sortByAddress } from '../lib/houseList';
 import type { House, LatLng } from '../lib/types';
 
 interface Props {
   houses: House[];
   visited: ReadonlySet<string>;
-  /** Kid's GPS position, if on: shows meters and allows sorting by distance. */
+  /** Kid's GPS position, if on: shows meters. */
   position: LatLng | null;
   onToggle: (id: string) => void;
-  /** Turns GPS on when the kid picks distance sorting without it. */
-  onLocate: () => void;
 }
 
-type SortBy = 'address' | 'distance';
-
-const SORT_LABELS: Record<SortBy, string> = { address: 'כתובת', distance: 'הכי קרוב אליי' };
-
-export function HouseTable({ houses, visited, position, onToggle, onLocate }: Props) {
-  const [sortBy, setSortBy] = useState<SortBy>('address');
+export function HouseTable({ houses, visited, position, onToggle }: Props) {
+  const [query, setQuery] = useState('');
   if (houses.length === 0) return <p className="hint table-empty">עדיין אין בתים במפה</p>;
 
-  const choose = (o: SortBy) => {
-    setSortBy(o);
-    if (o === 'distance' && !position) onLocate();
-  };
-
-  // Address order (street, number, floor, apartment); by distance once GPS has a fix.
-  const rows = sortByAddress(houses).map((h) => ({
-    house: h,
-    label: formatAddress(h),
-    meters: position ? distanceMeters(position, h) : null,
-  }));
-  if (sortBy === 'distance' && position) rows.sort((a, b) => a.meters! - b.meters!);
-  // Houses already visited drop to the bottom (sort is stable, so they keep the same order there).
-  rows.sort((a, b) => Number(visited.has(a.house.id)) - Number(visited.has(b.house.id)));
+  const shown = query.trim() ? searchHouses(houses, query, houses.length) : houses;
+  // Address order (street, number, floor, apartment); houses already visited drop to the
+  // bottom (sort is stable, so they keep the same order there).
+  const rows = sortByAddress(shown)
+    .map((h) => ({ house: h, label: formatAddress(h), meters: position ? distanceMeters(position, h) : null }))
+    .sort((a, b) => Number(visited.has(a.house.id)) - Number(visited.has(b.house.id)));
 
   return (
     <div className="table-wrap">
-      <div className="table-sort">
-        <span className="hint">מיון לפי</span>
-        <div className="view-toggle" role="group" aria-label="מיון">
-          {(['address', 'distance'] as const).map((o) => (
-            <button key={o} type="button" aria-pressed={sortBy === o} onClick={() => choose(o)}>
-              {SORT_LABELS[o]}
-            </button>
-          ))}
-        </div>
-      </div>
+      <input
+        type="search"
+        className="search-input table-filter"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="סננו לפי כתובת, למשל: הירדן 12"
+        aria-label="חיפוש לפי כתובת"
+      />
       <table className="house-table">
         <thead>
           <tr>
@@ -80,6 +64,7 @@ export function HouseTable({ houses, visited, position, onToggle, onLocate }: Pr
           })}
         </tbody>
       </table>
+      {rows.length === 0 && <p className="hint table-empty">אין בתים שמתאימים לחיפוש</p>}
     </div>
   );
 }

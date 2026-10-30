@@ -29,7 +29,7 @@ progress. Neighbours add their house through a form; it appears on the map immed
   set view_password_hash = extensions.crypt('<password>', extensions.gen_salt('bf', 10))
   where id = 1;
   ```
-- Kids can switch the map tab between a map and a table (sorted by address, then floor, then apartment, or by distance from the kid; visited houses move to the bottom). A building's pumpkin popup lists apartments by floor, then apartment.
+- Kids can switch the map tab between a map and a table (sorted by address, then floor, then apartment, with an address filter; visited houses move to the bottom). A building's pumpkin popup lists apartments by floor, then apartment.
 - Security headers / CSP in `vercel.json`.
 
 ## Setup
@@ -42,7 +42,7 @@ supabase db push             # applies supabase/migrations
 npm run dev
 ```
 
-The map opens on Ever HaYarden, Kiryat Ono (override with `VITE_MAP_CENTER=lat,lng`) until houses exist, then fits to them.
+The map opens on Ever HaYarden, Kiryat Ono (override with `VITE_MAP_CENTER=lat,lng`) until houses exist, then fits to the neighbourhood (ignoring stray far-off pins). It only jumps to the kid's GPS when they are within 500 m of a house.
 
 ## Scripts
 

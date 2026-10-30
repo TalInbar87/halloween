@@ -34,7 +34,7 @@ const rowsText = () =>
 
 describe('HouseTable', () => {
   it('lists every house with its full address and notes', () => {
-    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} onLocate={vi.fn()} />);
+    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
     expect(screen.getAllByRole('row')).toHaveLength(4);
     expect(screen.getByText('הירדן 12, קרית אונו · דירה 4, קומה 2')).toBeInTheDocument();
     expect(screen.getByText('בלי בוטנים')).toBeInTheDocument();
@@ -47,31 +47,29 @@ describe('HouseTable', () => {
       house('c', 'אלון 3', 32.05, { floor: '2', apartment: '5' }),
       house('d', 'אלון 3', 32.05, { floor: '2', apartment: '4' }),
     ];
-    render(<HouseTable houses={list} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} onLocate={vi.fn()} />);
+    render(<HouseTable houses={list} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} />);
     expect(rowsText()).toEqual(['אלון 3 · דירה 4, קומה 2', 'אלון 3 · דירה 5, קומה 2', 'אלון 3 · דירה 20, קומה 10', 'בר 1']);
-    expect(screen.getByRole('button', { name: 'כתובת' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('sorts by distance and shows meters when GPS is on', async () => {
-    render(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} onLocate={vi.fn()} />);
-    await userEvent.setup().click(screen.getByRole('button', { name: 'הכי קרוב אליי' }));
-    expect(rowsText()[0]).toContain('הירדן');
-    expect(rowsText()[2]).toContain('צה"ל');
+  it('shows meters when GPS is on, without changing the order', () => {
+    render(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} />);
+    expect(rowsText()[0]).toContain('אלון');
     expect(screen.getByText('11 מ׳')).toBeInTheDocument();
   });
 
-  it('turns GPS on when picking distance without it, and sorts once there is a fix', async () => {
-    const onLocate = vi.fn();
-    const { rerender } = render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} onLocate={onLocate} />);
-    await userEvent.setup().click(screen.getByRole('button', { name: 'הכי קרוב אליי' }));
-    expect(onLocate).toHaveBeenCalled();
-    expect(rowsText()[0]).toContain('אלון');
-    rerender(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} onLocate={onLocate} />);
-    expect(rowsText()[0]).toContain('הירדן');
+  it('filters by address', async () => {
+    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
+    const user = userEvent.setup();
+    await user.type(screen.getByRole('searchbox', { name: 'חיפוש לפי כתובת' }), 'צהל');
+    expect(rowsText()).toHaveLength(1);
+    expect(rowsText()[0]).toContain('צה"ל');
+    await user.clear(screen.getByRole('searchbox'));
+    await user.type(screen.getByRole('searchbox'), 'אין כזה');
+    expect(screen.getByText('אין בתים שמתאימים לחיפוש')).toBeInTheDocument();
   });
 
   it('moves visited houses to the bottom, still in order, and shows them checked', () => {
-    render(<HouseTable houses={houses} visited={new Set(['mid', 'far'])} position={null} onToggle={vi.fn()} onLocate={vi.fn()} />);
+    render(<HouseTable houses={houses} visited={new Set(['mid', 'far'])} position={null} onToggle={vi.fn()} />);
     const rows = rowsText();
     expect(rows[0]).toContain('הירדן');
     expect(rows[1]).toContain('אלון');
@@ -86,7 +84,7 @@ describe('HouseTable', () => {
         visited={new Set()}
         position={null}
         onToggle={vi.fn()}
-        onLocate={vi.fn()}
+       
       />,
     );
     expect(screen.getByText('נגמרו הממתקים 😢')).toBeInTheDocument();
@@ -94,13 +92,13 @@ describe('HouseTable', () => {
 
   it('toggles a house', async () => {
     const onToggle = vi.fn();
-    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={onToggle} onLocate={vi.fn()} />);
+    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={onToggle} />);
     await userEvent.setup().click(screen.getByRole('checkbox', { name: /הירדן/ }));
     expect(onToggle).toHaveBeenCalledWith('near');
   });
 
   it('shows an empty state', () => {
-    render(<HouseTable houses={[]} visited={new Set()} position={null} onToggle={vi.fn()} onLocate={vi.fn()} />);
+    render(<HouseTable houses={[]} visited={new Set()} position={null} onToggle={vi.fn()} />);
     expect(screen.getByText(/עדיין אין בתים/)).toBeInTheDocument();
   });
 });

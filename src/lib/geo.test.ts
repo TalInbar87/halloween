@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { distanceMeters, isInServiceArea, nearestUnvisited } from './geo';
+import { distanceMeters, isInServiceArea, isNearHouses, nearestUnvisited, neighbourhoodHouses } from './geo';
 import type { House } from './types';
 
 const house = (id: string, lat: number, lng: number): House => ({
@@ -60,5 +60,26 @@ describe('isInServiceArea', () => {
 
   it('rejects non-finite values', () => {
     expect(isInServiceArea(Number.NaN, 34.8)).toBe(false);
+  });
+});
+
+describe('neighbourhoodHouses', () => {
+  it('drops a house pinned far from the rest', () => {
+    const list = [house('a', 32.05, 34.858), house('b', 32.051, 34.859), house('c', 32.049, 34.857), house('far', 32.1, 34.8)];
+    expect(neighbourhoodHouses(list).map((h) => h.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('handles empty and spread-out lists', () => {
+    expect(neighbourhoodHouses([])).toEqual([]);
+    const spread = [house('a', 32.0, 34.8), house('b', 32.2, 35.0)];
+    expect(neighbourhoodHouses(spread)).toEqual(spread);
+  });
+});
+
+describe('isNearHouses', () => {
+  it('is true within 500 m of a house and false far away', () => {
+    const list = [house('a', 32.05, 34.858)];
+    expect(isNearHouses({ lat: 32.052, lng: 34.858 }, list)).toBe(true);
+    expect(isNearHouses({ lat: 32.08, lng: 34.82 }, list)).toBe(false);
   });
 });

@@ -33,3 +33,25 @@ export function isInServiceArea(lat: number, lng: number): boolean {
   const a = SERVICE_AREA;
   return lat >= a.minLat && lat <= a.maxLat && lng >= a.minLng && lng <= a.maxLng;
 }
+
+const median = (xs: number[]) => {
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = s.length >> 1;
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+};
+
+/**
+ * The houses that make up the neighbourhood: those within `radiusM` of the median point,
+ * so one pin dropped far away doesn't zoom the whole map out.
+ */
+export function neighbourhoodHouses(houses: House[], radiusM = 1500): House[] {
+  if (houses.length === 0) return houses;
+  const center = { lat: median(houses.map((h) => h.lat)), lng: median(houses.map((h) => h.lng)) };
+  const near = houses.filter((h) => distanceMeters(center, h) <= radiusM);
+  return near.length ? near : houses;
+}
+
+/** Is `position` within `meters` of any house? */
+export function isNearHouses(position: LatLng, houses: LatLng[], meters = 500): boolean {
+  return houses.some((h) => distanceMeters(position, h) <= meters);
+}
