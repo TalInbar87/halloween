@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Circle, MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { House, LatLng } from '../lib/types';
-import { nearestUnvisited } from '../lib/geo';
+import { isNearHouses, nearestUnvisited, neighbourhoodHouses } from '../lib/geo';
 import { formatAddress, groupByLocation, isAllDone, sortByFloor } from '../lib/houseList';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { ProgressBar } from './ProgressBar';
@@ -26,13 +26,17 @@ function FitHouses({ houses }: { houses: House[] }) {
   useEffect(() => {
     if (fitted.current || houses.length === 0) return;
     fitted.current = true;
-    map.fitBounds(L.latLngBounds(houses.map((h) => [h.lat, h.lng])), { padding: [40, 40], maxZoom: 17 });
+    const area = neighbourhoodHouses(houses);
+    map.fitBounds(L.latLngBounds(area.map((h) => [h.lat, h.lng])), { padding: [40, 40], maxZoom: 17 });
   }, [map, houses]);
   return null;
 }
 
-/** Centers on the kid once, on the first GPS fix; after that the map pans freely. */
-function CenterOnMe({ position }: { position: LatLng | null }) {
+/**
+ * Centers on the kid once, on the first GPS fix, if they're in the neighbourhood (far away,
+ * the map stays on the houses); after that the map pans freely.
+ */
+function CenterOnMe({ position, houses }: { position: LatLng | null; houses: House[] }) {
   const map = useMap();
   const centered = useRef(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -44,7 +48,7 @@ function CenterOnMe({ position }: { position: LatLng | null }) {
   useEffect(() => {
     if (position && !centered.current) {
       centered.current = true;
-      recenter();
+      if (houses.length === 0 || isNearHouses(position, houses)) recenter();
     }
   }, [position]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -122,13 +126,13 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
       </div>
 
       {view === 'table' ? (
-        <HouseTable houses={houses} visited={visited} position={me} onToggle={onToggle} onLocate={() => setGpsOn(true)} />
+        <HouseTable houses={houses} visited={visited} position={me} onToggle={onToggle} />
       ) : (
         <MapContainer center={[center.lat, center.lng]} zoom={16} className="kid-map">
           <OsmTiles />
           <AutoResize />
           <FitHouses houses={houses} />
-          <CenterOnMe position={me} />
+          <CenterOnMe position={me} houses={houses} />
           {groups.map((g) => {
             const remaining = g.houses.filter((h) => !visited.has(h.id)).length;
             const available = g.houses.filter((h) => !h.out_of_candy).length;
