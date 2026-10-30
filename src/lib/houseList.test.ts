@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addressKey, formatAddress, groupByLocation, searchHouses, sortByAddress, splitAddress } from './houseList';
+import { addressKey, formatAddress, groupByLocation, searchHouses, sortByAddress, sortByFloor, splitAddress } from './houseList';
 import type { House } from './types';
 
 const house = (id: string, over: Partial<House> = {}): House => ({
@@ -181,5 +181,30 @@ describe('searchHouses', () => {
   it('can return every match', () => {
     const many = Array.from({ length: 30 }, (_, i) => house(String(i)));
     expect(searchHouses(many, 'הירדן', Infinity)).toHaveLength(30);
+  });
+});
+
+describe('sortByFloor', () => {
+  it('sorts by floor, then apartment, numerically, with blanks last', () => {
+    const list = [
+      house('a', { floor: '10', apartment: '20' }),
+      house('b', { floor: null, apartment: '1' }),
+      house('c', { floor: '2', apartment: '5' }),
+      house('d', { floor: '2', apartment: null }),
+      house('e', { floor: '2', apartment: '4' }),
+    ];
+    expect(sortByFloor(list).map((h) => h.id)).toEqual(['e', 'c', 'd', 'a', 'b']);
+  });
+
+  it('breaks ties by address', () => {
+    const list = [house('a', { address: 'ב 1', floor: '1' }), house('b', { address: 'א 1', floor: '1' })];
+    expect(sortByFloor(list).map((h) => h.id)).toEqual(['b', 'a']);
+  });
+});
+
+describe('sortByAddress floors', () => {
+  it('orders apartments in the same building by floor first', () => {
+    const list = [house('a', { floor: '3', apartment: '1' }), house('b', { floor: '1', apartment: '9' })];
+    expect(sortByAddress(list).map((h) => h.id)).toEqual(['b', 'a']);
   });
 });

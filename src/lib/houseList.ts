@@ -74,11 +74,20 @@ const MAX_RESULTS = 8;
 
 const collator = new Intl.Collator('he', { numeric: true });
 
-/** Street, then house number (9 before 10), then apartment. */
+/** Floor or apartment: "2" before "10", blank last. */
+const compareUnit = (a: string | null, b: string | null) => (!a ? (b ? 1 : 0) : !b ? -1 : collator.compare(a, b));
+
+const compareFloorApartment = (a: House, b: House) =>
+  compareUnit(a.floor, b.floor) || compareUnit(a.apartment, b.apartment);
+
+/** Street, then house number (9 before 10), then floor and apartment. */
 export function sortByAddress(houses: House[]): House[] {
-  return [...houses].sort(
-    (a, b) => collator.compare(a.address, b.address) || collator.compare(a.apartment ?? '', b.apartment ?? ''),
-  );
+  return [...houses].sort((a, b) => collator.compare(a.address, b.address) || compareFloorApartment(a, b));
+}
+
+/** Floor, then apartment, then address — the order you walk up a building. */
+export function sortByFloor(houses: House[]): House[] {
+  return [...houses].sort((a, b) => compareFloorApartment(a, b) || collator.compare(a.address, b.address));
 }
 
 export function searchHouses(houses: House[], query: string, limit = MAX_RESULTS): House[] {

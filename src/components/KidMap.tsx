@@ -3,7 +3,7 @@ import { Circle, MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { House, LatLng } from '../lib/types';
 import { nearestUnvisited } from '../lib/geo';
-import { formatAddress, groupByLocation, isAllDone } from '../lib/houseList';
+import { formatAddress, groupByLocation, isAllDone, sortByFloor } from '../lib/houseList';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { ProgressBar } from './ProgressBar';
 import { HouseTable } from './HouseTable';
@@ -87,7 +87,11 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
       )
     : null;
   const visitedCount = houses.filter((h) => visited.has(h.id)).length;
-  const groups = useMemo(() => groupByLocation(houses), [houses]);
+  // Apartments in a popup go up the building: floor, then apartment.
+  const groups = useMemo(
+    () => groupByLocation(houses).map((g) => ({ ...g, houses: sortByFloor(g.houses) })),
+    [houses],
+  );
 
   return (
     <div className="kid">

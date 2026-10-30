@@ -29,7 +29,7 @@ progress. Neighbours add their house through a form; it appears on the map immed
   set view_password_hash = extensions.crypt('<password>', extensions.gen_salt('bf', 10))
   where id = 1;
   ```
-- Kids can switch the map tab between a map and a table (sorted by distance when GPS is on).
+- Kids can switch the map tab between a map and a table (sorted by address; can sort by floor & apartment, or by distance when GPS is on). A building's pumpkin popup lists apartments by floor, then apartment.
 - Security headers / CSP in `vercel.json`.
 
 ## Setup
