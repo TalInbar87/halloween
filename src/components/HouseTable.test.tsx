@@ -40,16 +40,34 @@ describe('HouseTable', () => {
     expect(screen.getByText('בלי בוטנים')).toBeInTheDocument();
   });
 
-  it('sorts alphabetically without GPS', () => {
-    render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
+  it('sorts by address by default, even with GPS on', () => {
+    render(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} />);
     expect(rowsText()[0]).toContain('אלון');
+    expect(screen.getByRole('button', { name: 'כתובת' })).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('sorts by distance and shows meters when GPS is on', () => {
-    render(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} />);
+  it('sorts by floor, then apartment', async () => {
+    const building = [
+      house('a', 'אלון 3', 32.05, { floor: '10', apartment: '20' }),
+      house('b', 'אלון 3', 32.05, { floor: '2', apartment: '5' }),
+      house('c', 'אלון 3', 32.05, { floor: '2', apartment: '4' }),
+    ];
+    render(<HouseTable houses={building} visited={new Set()} position={null} onToggle={vi.fn()} />);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'קומה ודירה' }));
+    expect(rowsText()).toEqual(['אלון 3 · דירה 4, קומה 2', 'אלון 3 · דירה 5, קומה 2', 'אלון 3 · דירה 20, קומה 10']);
+  });
+
+  it('offers distance sorting only with GPS, and shows meters', async () => {
+    const { rerender } = render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'מרחק' })).not.toBeInTheDocument();
+    rerender(<HouseTable houses={houses} visited={new Set()} position={{ lat: 32.05, lng: 34.858 }} onToggle={vi.fn()} />);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'מרחק' }));
     expect(rowsText()[0]).toContain('הירדן');
     expect(rowsText()[2]).toContain('צה"ל');
     expect(screen.getByText('11 מ׳')).toBeInTheDocument();
+    // GPS lost: back to address order.
+    rerender(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
+    expect(rowsText()[0]).toContain('אלון');
   });
 
   it('keeps a visited house in place (no jump) and shows it checked', () => {
