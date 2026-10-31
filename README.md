@@ -33,6 +33,10 @@ progress. Neighbours add their house through a form; it appears on the map immed
 - Can be added to the home screen (`public/manifest.webmanifest`, icons in `public/icons/`). No service worker on purpose: the site always loads the current version.
 - Security headers / CSP in `vercel.json`.
 
+## Between seasons
+
+`SEASON_OVER` in `src/lib/season.ts` shows only the "see you next year" screen and loads no data. Set it to `false` to open the map again.
+
 ## Setup
 
 ```bash

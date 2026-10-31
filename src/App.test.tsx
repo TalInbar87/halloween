@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, beforeEach } from 'vitest';
 
+const season = vi.hoisted(() => ({ SEASON_OVER: false }));
 const api = vi.hoisted(() => ({
   fetchHouses: vi.fn(),
   addHouse: vi.fn(),
@@ -25,6 +26,7 @@ const fixtureHouse = {
   created_at: 'x',
 };
 
+vi.mock('./lib/season', () => season);
 vi.mock('./lib/supabase', () => ({ supabase: {}, supabaseConfigured: true }));
 // Covered by their own tests; keep App tests focused and deterministic.
 vi.mock('./components/WelcomePopup', () => ({ WelcomePopup: () => null }));
@@ -74,6 +76,7 @@ import { JOKES } from './lib/jokes';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  season.SEASON_OVER = false;
   localStorage.clear();
   // already let in, an hour ago
   localStorage.setItem('halloween.access.v1', JSON.stringify({ password: 'ourstreet', expires: Date.now() + 4 * 3600_000 }));
@@ -286,6 +289,30 @@ describe('App', () => {
     it('uses the remembered password for loading houses', async () => {
       render(<App />);
       await waitFor(() => expect(api.fetchHouses).toHaveBeenCalledWith({}, 'ourstreet'));
+    });
+  });
+
+  describe('after the season', () => {
+    beforeEach(() => {
+      season.SEASON_OVER = true;
+    });
+
+    it('shows "see you next year" above the map, with no password needed', () => {
+      localStorage.removeItem('halloween.access.v1');
+      render(<App />);
+      expect(screen.getByRole('heading', { name: /נתראה בשנה הבאה/ })).toBeInTheDocument();
+      expect(screen.getByTestId('kid-map')).toBeInTheDocument();
+      expect(screen.queryByLabelText('סיסמת השכונה')).not.toBeInTheDocument();
+    });
+
+    it('does not load houses, even on a phone that is still logged in', () => {
+      render(<App />);
+      expect(api.fetchHouses).not.toHaveBeenCalled();
+    });
+
+    it('offers no admin gear', () => {
+      render(<App />);
+      expect(screen.queryByRole('button', { name: 'ניהול' })).not.toBeInTheDocument();
     });
   });
 });

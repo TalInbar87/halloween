@@ -1367,3 +1367,50 @@ button:focus-visible {
   font-size: 0.9rem;
   color: var(--muted);
 }
+
+/* "See you next year": above the map and everything else */
+.season-over {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 35%, rgb(59 42 99 / 0.97), rgb(20 16 31 / 0.99) 70%);
+}
+
+.season-sky {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 180px;
+  overflow: hidden;
+}
+
+.season-pumpkin {
+  font-size: 96px;
+  line-height: 1;
+  filter: drop-shadow(0 0 22px rgb(255 122 26 / 0.75));
+  animation: trophy-bob 2.4s ease-in-out infinite;
+}
+
+.season-over h1 {
+  margin: 12px 0 0;
+  font-size: 2rem;
+  color: var(--orange);
+  text-shadow: 0 0 18px rgb(255 122 26 / 0.5);
+}
+
+.season-over p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-pumpkin {
+    animation: none;
+  }
+}

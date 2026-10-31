@@ -7,6 +7,8 @@ import { AdminPanel } from './components/AdminPanel';
 import { Countdown } from './components/Countdown';
 import { WelcomePopup } from './components/WelcomePopup';
 import { AccessGate } from './components/AccessGate';
+import { SeasonOver } from './components/SeasonOver';
+import { SEASON_OVER } from './lib/season';
 import { InstallHint } from './components/InstallHint';
 import { clearAccess, loadAccess, saveAccess } from './lib/access';
 import { JokeToast } from './components/JokeToast';
@@ -83,7 +85,7 @@ export default function App() {
 
   // New houses show up for kids already out on the street.
   useEffect(() => {
-    if (!supabaseConfigured || !access) return;
+    if (SEASON_OVER || !supabaseConfigured || !access) return;
     refresh();
     const timer = setInterval(refresh, REFRESH_MS);
     const onFocus = () => refresh();
@@ -144,6 +146,17 @@ export default function App() {
   function changeView(next: View) {
     setView(next);
     saveView(storage, next);
+  }
+
+  if (SEASON_OVER) {
+    return (
+      <div className="app">
+        <main className="main">
+          <KidMap houses={[]} visited={visited} onToggle={onToggle} view="map" onViewChange={changeView} />
+        </main>
+        <SeasonOver />
+      </div>
+    );
   }
 
   return (
