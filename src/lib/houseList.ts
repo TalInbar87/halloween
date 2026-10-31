@@ -1,14 +1,20 @@
 import { distanceMeters } from './geo';
 import type { House } from './types';
 
-/** "street, city · דירה 4, קומה 2, קוד בניין 1234#" */
-export function formatAddress(h: Pick<House, 'address' | 'apartment' | 'floor' | 'building_code'>): string {
-  const parts = [
+/** "דירה 4, קומה 2, קוד בניין 1234#" — empty for a private house. */
+export function unitDetails(h: Pick<House, 'apartment' | 'floor' | 'building_code'>): string {
+  return [
     h.apartment && `דירה ${h.apartment}`,
     h.floor && `קומה ${h.floor}`,
     h.building_code && `קוד בניין ${h.building_code}`,
-  ].filter(Boolean);
-  return parts.length ? `${h.address} · ${parts.join(', ')}` : h.address;
+  ]
+    .filter(Boolean)
+    .join(', ');
+}
+
+export function formatAddress(h: Pick<House, 'address' | 'apartment' | 'floor' | 'building_code'>): string {
+  const details = unitDetails(h);
+  return details ? `${h.address} · ${details}` : h.address;
 }
 
 export interface HouseGroup {

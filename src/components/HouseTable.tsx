@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { distanceMeters } from '../lib/geo';
 import { formatAddress, searchHouses, sortByAddress } from '../lib/houseList';
+import { ShareList } from './ShareList';
 import type { House, LatLng } from '../lib/types';
 
 interface Props {
@@ -24,6 +25,7 @@ export function HouseTable({ houses, visited, position, onToggle }: Props) {
 
   return (
     <div className="table-wrap">
+      <ShareList houses={houses} />
       <input
         type="search"
         className="search-input table-filter"

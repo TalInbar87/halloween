@@ -1348,3 +1348,21 @@ button:focus-visible {
   font-size: 0.95rem;
   cursor: pointer;
 }
+
+/* Send the list on WhatsApp */
+.share-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.share-list .btn {
+  flex: 1 1 140px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+.share-message {
+  flex-basis: 100%;
+}
