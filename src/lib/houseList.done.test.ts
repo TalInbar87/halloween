@@ -86,6 +86,17 @@ describe('visibleGroups (what the map shows)', () => {
     expect(g.isBuilding).toBe(true);
   });
 
+  it('keeps the coin for a house the kid collected before it ran out', () => {
+    const [g] = visibleGroups([apt('a', { out_of_candy: true })], new Set(['a']));
+    expect(g.houses.map((h) => h.id)).toEqual(['a']);
+    expect(g.remaining).toBe(0);
+  });
+
+  it('gives no coin to a kid who did not arrive in time', () => {
+    const groups = visibleGroups([apt('a', { out_of_candy: true })], new Set(['someone-else']));
+    expect(groups).toEqual([]);
+  });
+
   it('does not call a single house a building', () => {
     const [g] = visibleGroups([apt('a')], new Set(['a']));
     expect(g.isBuilding).toBe(false);

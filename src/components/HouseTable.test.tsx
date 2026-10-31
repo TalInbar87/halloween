@@ -95,6 +95,12 @@ describe('HouseTable', () => {
       expect(screen.getByText('נגמרו הממתקים 😢')).toBeInTheDocument();
     });
 
+    it('keeps a house the kid already collected, without counting it as hidden', () => {
+      render(<HouseTable houses={withOut} visited={new Set([withOut[0].id])} position={null} onToggle={vi.fn()} />);
+      expect(screen.getAllByRole('row')).toHaveLength(4);
+      expect(screen.queryByRole('checkbox', { name: /הציגו גם/ })).not.toBeInTheDocument();
+    });
+
     it('offers no filter when no house ran out', () => {
       render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
       expect(screen.queryByRole('checkbox', { name: /הציגו גם/ })).not.toBeInTheDocument();

@@ -130,18 +130,26 @@ export interface VisibleGroup extends HouseGroup {
   isBuilding: boolean;
 }
 
-/** What the map shows: houses that ran out of candy are hidden, apartments go up the building. */
+/**
+ * A house shows while it has candy, or if this kid collected it in time (they keep the
+ * coin). Arrived too late? It's gone.
+ */
+export function isShown(h: House, visited: ReadonlySet<string>): boolean {
+  return !h.out_of_candy || visited.has(h.id);
+}
+
+/** What the map shows, with apartments going up the building. */
 export function visibleGroups(houses: House[], visited: ReadonlySet<string>): VisibleGroup[] {
   return groupByLocation(houses).flatMap((g) => {
-    const open = sortByFloor(g.houses.filter((h) => !h.out_of_candy));
-    if (open.length === 0) return [];
-    const remaining = open.filter((h) => !visited.has(h.id)).length;
-    return [{ ...g, houses: open, remaining, isBuilding: g.houses.length > 1 }];
+    const shown = sortByFloor(g.houses.filter((h) => isShown(h, visited)));
+    if (shown.length === 0) return [];
+    const remaining = shown.filter((h) => !visited.has(h.id)).length;
+    return [{ ...g, houses: shown, remaining, isBuilding: g.houses.length > 1 }];
   });
 }
 
 /** Unvisited houses that ran out don't count, so the bar can still reach the end. */
 export function roundProgress(houses: House[], visited: ReadonlySet<string>): { visited: number; total: number } {
-  const counted = houses.filter((h) => visited.has(h.id) || !h.out_of_candy);
+  const counted = houses.filter((h) => isShown(h, visited));
   return { visited: counted.filter((h) => visited.has(h.id)).length, total: counted.length };
 }

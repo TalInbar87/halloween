@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { distanceMeters } from '../lib/geo';
-import { formatAddress, searchHouses, sortByAddress } from '../lib/houseList';
+import { formatAddress, isShown, searchHouses, sortByAddress } from '../lib/houseList';
 import { ShareList } from './ShareList';
 import type { House, LatLng } from '../lib/types';
 
@@ -17,9 +17,9 @@ export function HouseTable({ houses, visited, position, onToggle }: Props) {
   const [showOut, setShowOut] = useState(false);
   if (houses.length === 0) return <p className="hint table-empty">עדיין אין בתים במפה</p>;
 
-  // Houses that ran out of candy are hidden unless asked for.
-  const outCount = houses.filter((h) => h.out_of_candy).length;
-  const listed = showOut ? houses : houses.filter((h) => !h.out_of_candy);
+  // Houses that ran out before this kid got there are hidden unless asked for.
+  const hiddenCount = houses.filter((h) => !isShown(h, visited)).length;
+  const listed = showOut ? houses : houses.filter((h) => isShown(h, visited));
   const shown = query.trim() ? searchHouses(listed, query, listed.length) : listed;
   // Address order (street, number, floor, apartment); houses already visited drop to the
   // bottom (sort is stable, so they keep the same order there).
@@ -38,10 +38,10 @@ export function HouseTable({ houses, visited, position, onToggle }: Props) {
         placeholder="סננו לפי כתובת, למשל: הירדן 12"
         aria-label="חיפוש לפי כתובת"
       />
-      {outCount > 0 && (
+      {hiddenCount > 0 && (
         <label className="check table-out-filter">
           <input type="checkbox" checked={showOut} onChange={(e) => setShowOut(e.target.checked)} />
-          <span>הציגו גם בתים שנגמרו בהם הממתקים ({outCount})</span>
+          <span>הציגו גם בתים שנגמרו בהם הממתקים ({hiddenCount})</span>
         </label>
       )}
       <table className="house-table">
