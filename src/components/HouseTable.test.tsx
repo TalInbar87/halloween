@@ -77,17 +77,28 @@ describe('HouseTable', () => {
     expect(screen.getByRole('checkbox', { name: /אלון/ })).toBeChecked();
   });
 
-  it('labels houses that ran out of candy', () => {
-    render(
-      <HouseTable
-        houses={[{ ...houses[0], out_of_candy: true }]}
-        visited={new Set()}
-        position={null}
-        onToggle={vi.fn()}
-       
-      />,
-    );
-    expect(screen.getByText('נגמרו הממתקים 😢')).toBeInTheDocument();
+  describe('houses that ran out of candy', () => {
+    const withOut = [{ ...houses[0], out_of_candy: true }, houses[1], houses[2]];
+    const filter = () => screen.getByRole('checkbox', { name: /הציגו גם בתים שנגמרו בהם הממתקים/ });
+
+    it('are hidden by default', () => {
+      render(<HouseTable houses={withOut} visited={new Set()} position={null} onToggle={vi.fn()} />);
+      expect(screen.getAllByRole('row')).toHaveLength(3); // header + 2
+      expect(screen.queryByText('נגמרו הממתקים 😢')).not.toBeInTheDocument();
+      expect(filter()).not.toBeChecked();
+    });
+
+    it('can be shown with the filter, labelled', async () => {
+      render(<HouseTable houses={withOut} visited={new Set()} position={null} onToggle={vi.fn()} />);
+      await userEvent.setup().click(filter());
+      expect(screen.getAllByRole('row')).toHaveLength(4);
+      expect(screen.getByText('נגמרו הממתקים 😢')).toBeInTheDocument();
+    });
+
+    it('offers no filter when no house ran out', () => {
+      render(<HouseTable houses={houses} visited={new Set()} position={null} onToggle={vi.fn()} />);
+      expect(screen.queryByRole('checkbox', { name: /הציגו גם/ })).not.toBeInTheDocument();
+    });
   });
 
   it('toggles a house', async () => {

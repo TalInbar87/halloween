@@ -989,11 +989,6 @@ button:focus-visible {
 }
 
 /* Out of candy */
-.marker-out {
-  filter: grayscale(1) brightness(0.8);
-  opacity: 0.75;
-}
-
 .out-label {
   display: inline-block;
   font-size: 0.85rem;
@@ -1365,4 +1360,10 @@ button:focus-visible {
 
 .share-message {
   flex-basis: 100%;
+}
+
+.table-out-filter {
+  margin: 8px 0 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
 }

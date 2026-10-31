@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { completedBuilding, isAllDone } from './houseList';
+import { completedBuilding, isAllDone, roundProgress, visibleGroups } from './houseList';
 import type { House } from './types';
 
 const house = (id: string, lat: number, lng: number, over: Partial<House> = {}): House => ({
@@ -63,5 +63,48 @@ describe('completedBuilding', () => {
 
   it('is null for a single-family house', () => {
     expect(completedBuilding(houses, new Set(), 'd')).toBeNull();
+  });
+});
+
+describe('visibleGroups (what the map shows)', () => {
+  const apt = (id: string, over: Partial<House> = {}) =>
+    house(id, 32.05, 34.858, { address: 'נהר הירדן 27', ...over });
+
+  it('hides apartments that ran out of candy, and counts only what is left to visit', () => {
+    const [g] = visibleGroups([apt('a'), apt('b', { out_of_candy: true }), apt('c')], new Set(['a']));
+    expect(g.houses.map((h) => h.id)).toEqual(['a', 'c']);
+    expect(g.remaining).toBe(1);
+  });
+
+  it('hides an address entirely when everything there ran out', () => {
+    expect(visibleGroups([apt('a', { out_of_candy: true })], new Set())).toEqual([]);
+  });
+
+  it('is finished once the apartments with candy are visited, even if others ran out', () => {
+    const [g] = visibleGroups([apt('a'), apt('b', { out_of_candy: true })], new Set(['a']));
+    expect(g.remaining).toBe(0);
+    expect(g.isBuilding).toBe(true);
+  });
+
+  it('does not call a single house a building', () => {
+    const [g] = visibleGroups([apt('a')], new Set(['a']));
+    expect(g.isBuilding).toBe(false);
+  });
+});
+
+describe('roundProgress', () => {
+  const list = [
+    house('a', 32, 34.8),
+    house('b', 32, 34.8, { out_of_candy: true }),
+    house('c', 32, 34.8, { out_of_candy: true }),
+    house('d', 32, 34.8),
+  ];
+
+  it('ignores unvisited houses that ran out, so the bar can reach the end', () => {
+    expect(roundProgress(list, new Set(['a', 'd']))).toEqual({ visited: 2, total: 2 });
+  });
+
+  it('keeps a house already visited in the count even if it ran out later', () => {
+    expect(roundProgress(list, new Set(['a', 'b']))).toEqual({ visited: 2, total: 3 });
   });
 });

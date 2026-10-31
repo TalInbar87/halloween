@@ -122,3 +122,26 @@ export function completedBuilding(houses: House[], visited: ReadonlySet<string>,
   const othersDone = group.houses.every((h) => h.id === id || visited.has(h.id) || h.out_of_candy);
   return othersDone ? group.houses[0].address : null;
 }
+
+export interface VisibleGroup extends HouseGroup {
+  /** Apartments here with candy that weren't visited yet. */
+  remaining: number;
+  /** Several apartments at this address, including any hidden for running out. */
+  isBuilding: boolean;
+}
+
+/** What the map shows: houses that ran out of candy are hidden, apartments go up the building. */
+export function visibleGroups(houses: House[], visited: ReadonlySet<string>): VisibleGroup[] {
+  return groupByLocation(houses).flatMap((g) => {
+    const open = sortByFloor(g.houses.filter((h) => !h.out_of_candy));
+    if (open.length === 0) return [];
+    const remaining = open.filter((h) => !visited.has(h.id)).length;
+    return [{ ...g, houses: open, remaining, isBuilding: g.houses.length > 1 }];
+  });
+}
+
+/** Unvisited houses that ran out don't count, so the bar can still reach the end. */
+export function roundProgress(houses: House[], visited: ReadonlySet<string>): { visited: number; total: number } {
+  const counted = houses.filter((h) => visited.has(h.id) || !h.out_of_candy);
+  return { visited: counted.filter((h) => visited.has(h.id)).length, total: counted.length };
+}

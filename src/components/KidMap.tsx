@@ -3,7 +3,7 @@ import { Circle, MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { House, LatLng } from '../lib/types';
 import { isNearHouses, nearestUnvisited, neighbourhoodHouses } from '../lib/geo';
-import { formatAddress, groupByLocation, isAllDone, sortByFloor } from '../lib/houseList';
+import { formatAddress, isAllDone, roundProgress, visibleGroups } from '../lib/houseList';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { ProgressBar } from './ProgressBar';
 import { HouseTable } from './HouseTable';
@@ -90,17 +90,13 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
         visited,
       )
     : null;
-  const visitedCount = houses.filter((h) => visited.has(h.id)).length;
-  // Apartments in a popup go up the building: floor, then apartment.
-  const groups = useMemo(
-    () => groupByLocation(houses).map((g) => ({ ...g, houses: sortByFloor(g.houses) })),
-    [houses],
-  );
+  const progress = roundProgress(houses, visited);
+  const groups = useMemo(() => visibleGroups(houses, visited), [houses, visited]);
 
   return (
     <div className="kid">
       <div className="kid-top">
-        <ProgressBar visited={visitedCount} total={houses.length} />
+        <ProgressBar visited={progress.visited} total={progress.total} />
         <div className="view-toggle" role="group" aria-label="תצוגה">
           <button type="button" aria-pressed={view === 'map'} onClick={() => onViewChange('map')}>
             מפה
@@ -134,26 +130,24 @@ export function KidMap({ houses, visited, onToggle, view, onViewChange }: Props)
           <FitHouses houses={houses} />
           <CenterOnMe position={me} houses={houses} />
           {groups.map((g) => {
-            const remaining = g.houses.filter((h) => !visited.has(h.id)).length;
-            const available = g.houses.filter((h) => !h.out_of_candy).length;
+            const { remaining } = g;
             return (
               <Marker
                 key={g.key}
                 position={[g.lat, g.lng]}
-                icon={groupIcon({ remaining, total: g.houses.length, available })}
+                icon={groupIcon({ remaining, total: g.houses.length })}
                 zIndexOffset={markerZOffset({ remaining })}
               >
                 {/* Big buildings (e.g. 7 apartments) scroll inside the popup instead of overflowing the screen. */}
                 <Popup maxHeight={280}>
                   <KeepScroll watch={g.houses.map((h) => (visited.has(h.id) ? 1 : 0)).join('')}>
                   <div className="popup">
-                    {g.houses.length > 1 && remaining === 0 && <p className="building-done">לא השארתם ממתק אחד בבניין 😋🍬</p>}
+                    {g.isBuilding && remaining === 0 && <p className="building-done">לא השארתם ממתק אחד בבניין 😋🍬</p>}
                     {g.houses.map((h) => {
                       const done = visited.has(h.id);
                       return (
                         <div key={h.id} className={`popup-house ${done ? 'is-done' : ''}`}>
                           <strong>{formatAddress(h)}</strong>
-                          {h.out_of_candy && <span className="out-label">נגמרו הממתקים 😢</span>}
                           {h.notes && <p>{h.notes}</p>}
                           <button
                             type="button"

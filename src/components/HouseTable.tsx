@@ -14,9 +14,13 @@ interface Props {
 
 export function HouseTable({ houses, visited, position, onToggle }: Props) {
   const [query, setQuery] = useState('');
+  const [showOut, setShowOut] = useState(false);
   if (houses.length === 0) return <p className="hint table-empty">עדיין אין בתים במפה</p>;
 
-  const shown = query.trim() ? searchHouses(houses, query, houses.length) : houses;
+  // Houses that ran out of candy are hidden unless asked for.
+  const outCount = houses.filter((h) => h.out_of_candy).length;
+  const listed = showOut ? houses : houses.filter((h) => !h.out_of_candy);
+  const shown = query.trim() ? searchHouses(listed, query, listed.length) : listed;
   // Address order (street, number, floor, apartment); houses already visited drop to the
   // bottom (sort is stable, so they keep the same order there).
   const rows = sortByAddress(shown)
@@ -34,6 +38,12 @@ export function HouseTable({ houses, visited, position, onToggle }: Props) {
         placeholder="סננו לפי כתובת, למשל: הירדן 12"
         aria-label="חיפוש לפי כתובת"
       />
+      {outCount > 0 && (
+        <label className="check table-out-filter">
+          <input type="checkbox" checked={showOut} onChange={(e) => setShowOut(e.target.checked)} />
+          <span>הציגו גם בתים שנגמרו בהם הממתקים ({outCount})</span>
+        </label>
+      )}
       <table className="house-table">
         <thead>
           <tr>
