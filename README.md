@@ -30,6 +30,7 @@ progress. Neighbours add their house through a form; it appears on the map immed
   where id = 1;
   ```
 - Kids can switch the map tab between a map and a table (sorted by address, then floor, then apartment, with an address filter; visited houses move to the bottom). A building's pumpkin popup lists apartments by floor, then apartment.
+- Can be added to the home screen (`public/manifest.webmanifest`, icons in `public/icons/`). No service worker on purpose: the site always loads the current version.
 - Security headers / CSP in `vercel.json`.
 
 ## Setup

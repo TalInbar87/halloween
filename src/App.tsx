@@ -7,6 +7,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { Countdown } from './components/Countdown';
 import { WelcomePopup } from './components/WelcomePopup';
 import { AccessGate } from './components/AccessGate';
+import { InstallHint } from './components/InstallHint';
 import { clearAccess, loadAccess, saveAccess } from './lib/access';
 import { JokeToast } from './components/JokeToast';
 import { JOKES, loadJokeBag, nextJoke, saveJokeBag } from './lib/jokes';
@@ -165,6 +166,8 @@ export default function App() {
         </div>
         {!adminOpen && <Countdown />}
       </header>
+
+      <InstallHint hidden={!access || adminOpen} storage={storage} />
 
       {!supabaseConfigured && <p className="error banner">חסרות הגדרות Supabase (VITE_SUPABASE_URL).</p>}
       {access && loadError && <p className="error banner">לא הצלחנו לטעון את הבתים. בודקים שוב בעוד דקה.</p>}
